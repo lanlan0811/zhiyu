@@ -13,8 +13,8 @@ use zhiyu_core::sessions::SessionManager;
 use zhiyu_core::settings::{default_thought_level_for, load_settings, patch_settings, save_settings};
 use zhiyu_core::thought_runtime::switch_model_config;
 use zhiyu_core::Store;
-use zhiyu_daemon::RequestHandler;
-use zhiyu_daemon::event_bus::EventBus;
+use crate::RequestHandler;
+use crate::event_bus::EventBus;
 use zhiyu_protocol::{Command, ErrorInfo, Mode, Settings};
 
 /// All the state the daemon serves. One instance per daemon process.
