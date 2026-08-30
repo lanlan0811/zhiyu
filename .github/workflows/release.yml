@@ -39,8 +39,12 @@ jobs:
           code=$?
           echo "tauri_exit=$code" >> "$GITHUB_OUTPUT"
           echo "cargo tauri release build exit code: $code"
-          echo "=== full tauri-build.log (annotations) ==="
-          cat tauri-build.log | head -120 | while IFS= read -r line; do
+          echo "=== error lines ==="
+          grep -nE "error|panicked|failed|cannot find|unresolved" tauri-build.log | head -40 | while IFS= read -r line; do
+            echo "::error::${line}"
+          done
+          echo "=== tauri-build.log tail ==="
+          tail -100 tauri-build.log | while IFS= read -r line; do
             echo "::error::${line}"
           done
           exit 0
