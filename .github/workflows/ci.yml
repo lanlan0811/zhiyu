@@ -59,8 +59,9 @@ jobs:
           cargo test --workspace > test.log 2>&1
           code=$?
           echo "test_exit=$code" >> "$GITHUB_OUTPUT"
+          echo "cargo test exit code: $code"
           # surface failing test names and assertion messages as annotations
-          grep -E "^---- |^test .* FAILED|panicked at|assertion|FAILED|failures:" test.log | head -60 | while IFS= read -r line; do
+          grep -E "^---- |panicked at|assertion `.*` failed|test result:|failures:$" test.log | head -40 | while IFS= read -r line; do
             echo "::error::${line}"
           done
           exit 0
@@ -70,7 +71,8 @@ jobs:
         shell: bash
         run: |
           set +e
-          tail -120 test.log | while IFS= read -r line; do
+          echo "=== test.log tail (as annotations) ==="
+          tail -80 test.log | while IFS= read -r line; do
             echo "::error::${line}"
           done
           exit 1
@@ -83,11 +85,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-log
-          path: build.log
+          path: ${{ github.workspace }}/build.log
 
       - name: Upload test log
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-log
-          path: test.log
+          path: ${{ github.workspace }}/test.log

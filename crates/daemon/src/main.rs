@@ -3,7 +3,7 @@
 
 use std::sync::Arc;
 
-use zhiyu_daemon::{serve, AppState, CoreHandler, EventBus};
+use zhiyu_daemon::{serve, AppState, CoreHandler};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
