@@ -9,14 +9,17 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Usage {
+    #[serde(alias = "input_tokens")]
     pub input_tokens: u64,
+    #[serde(alias = "output_tokens")]
     pub output_tokens: u64,
-    #[serde(default)]
+    #[serde(default, alias = "reasoning_tokens")]
     pub reasoning_tokens: u64,
-    #[serde(default)]
+    #[serde(default, alias = "cached_read_tokens")]
     pub cached_read_tokens: u64,
-    #[serde(default)]
+    #[serde(default, alias = "cached_write_tokens")]
     pub cached_write_tokens: u64,
+    #[serde(alias = "total_tokens")]
     pub total_tokens: u64,
 }
 
