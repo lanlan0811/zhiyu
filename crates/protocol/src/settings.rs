@@ -69,6 +69,15 @@ fn default_locale() -> String {
     "zh-CN".into()
 }
 
+impl Default for UiPreferences {
+    fn default() -> Self {
+        UiPreferences {
+            theme: default_theme(),
+            locale: default_locale(),
+        }
+    }
+}
+
 impl Default for Settings {
     fn default() -> Self {
         Settings {

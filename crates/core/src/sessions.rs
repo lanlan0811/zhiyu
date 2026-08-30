@@ -19,6 +19,8 @@ pub struct LiveSession {
     pub streaming: bool,
     /// The ephemeral thought-level override for the next turn.
     pub thought_level: Option<zhiyu_protocol::ThoughtLevel>,
+    /// The model id bound to this session (defaults to the mode default).
+    pub model_id: Option<String>,
 }
 
 /// Manages sessions of both modes, backed by the SQLite store.
@@ -40,7 +42,7 @@ impl SessionManager {
             .create_session(mode, title.unwrap_or("新会话"), workspace_dir)?;
         self.live.lock().unwrap().insert(
             row.id,
-            LiveSession { row: row.clone(), queue: vec![], streaming: false, thought_level: None },
+            LiveSession { row: row.clone(), queue: vec![], streaming: false, thought_level: None, model_id: None },
         );
         Ok(row)
     }
@@ -53,8 +55,28 @@ impl SessionManager {
             queue: vec![],
             streaming: false,
             thought_level: None,
+            model_id: None,
         });
         Ok(Some(row))
+    }
+
+    /// Binds a model id to the session (persisted in memory; a follow-up
+    /// stores it in the session row).
+    pub fn set_model(&self, session_id: Uuid, model_id: &str) -> anyhow::Result<()> {
+        let mut live = self.live.lock().unwrap();
+        let s = live.get_mut(&session_id).ok_or_else(|| anyhow::anyhow!("session not open"))?;
+        s.model_id = Some(model_id.to_string());
+        Ok(())
+    }
+
+    /// The model id bound to the session, else the given default.
+    pub fn model_id(&self, session_id: Uuid, default: &str) -> String {
+        self.live
+            .lock()
+            .unwrap()
+            .get(&session_id)
+            .and_then(|s| s.model_id.clone())
+            .unwrap_or_else(|| default.to_string())
     }
 
     pub fn delete(&self, mode: Mode, id: Uuid) -> anyhow::Result<()> {

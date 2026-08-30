@@ -61,6 +61,13 @@ impl ThoughtLevel {
     }
 }
 
+/// The default thought level when nothing is configured.
+impl Default for ThoughtLevel {
+    fn default() -> Self {
+        ThoughtLevel::Medium
+    }
+}
+
 /// A path-based patch: set/unset JSON paths inside the API request body.
 /// Mirrors the ZCode provider-options patch system.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

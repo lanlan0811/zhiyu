@@ -370,21 +370,121 @@ fn workspace_root(state: &AppState, session_id: uuid::Uuid) -> Result<PathBuf, E
         .ok_or_else(|| err(-32014, "session has no workspace dir"))
 }
 
-/// Runs one queued turn: pops the text, drives the model via the driver and
-/// streams events. This is a functional skeleton — real provider dispatch and
-/// streaming wiring land with the Tauri shell in M7.
+/// Runs one queued turn: pops the text, resolves the session's model + key,
+/// drives the model through the driver's SSE stream and fans events out to
+/// the bus. Assistant text is accumulated and persisted on completion.
 async fn run_turn(state: &AppState, session_id: uuid::Uuid, mode: Mode) -> anyhow::Result<()> {
     let Some(text) = state.sessions.pop_turn(session_id)? else {
         return Ok(());
     };
     state.sessions.set_streaming(session_id, true);
-    // record the assistant placeholder (the driver will append deltas)
-    let _ = state.sessions.append_message(mode, session_id, zhiyu_protocol::Role::Assistant, "", None, None)?;
-    state.bus.emit(zhiyu_protocol::Event::TextDelta {
-        seq: 0,
-        session_id,
-        delta: format!("（本地占位回复，收到：{text}）"),
-    });
+
+    // resolve model config: session-bound model, else mode default
+    let (_file, models) = state.models.load_models();
+    let default_model = zhiyu_core::settings::default_model_for(&load_settings(None), mode);
+    let model_id = state.sessions.model_id(session_id, &default_model);
+    let Some(model) = models.into_iter().find(|m| m.id == model_id) else {
+        state.bus.emit(zhiyu_protocol::Event::Status {
+            seq: 0,
+            session_id: Some(session_id),
+            text: format!("模型 {model_id} 未配置，请在模型设置中检查"),
+        });
+        state.sessions.set_streaming(session_id, false);
+        return Ok(());
+    };
+
+    // resolve the API key from the keyring (provider-level)
+    let provider = model.provider_key_id.clone().unwrap_or_else(|| "deepseek".into());
+    let api_key = match state.keys.default_key(&provider) {
+        Ok(k) => k,
+        Err(_) => {
+            state.bus.emit(zhiyu_protocol::Event::Status {
+                seq: 0,
+                session_id: Some(session_id),
+                text: format!("provider {provider} 未配置 API-Key，请在模型设置中填写"),
+            });
+            state.sessions.set_streaming(session_id, false);
+            return Ok(());
+        }
+    };
+
+    // resolve the thought level (session override → mode default)
+    let level = state.sessions.take_thought_level(session_id, zhiyu_core::settings::default_thought_level_for(&load_settings(None), mode));
+    let level = model.reasoning.sanitize(level);
+
+    // build the message list: the full transcript as driver ChatMessages
+    let messages: Vec<zhiyu_driver::ChatMessage> = state
+        .sessions
+        .messages(session_id)?
+        .into_iter()
+        .map(|m| zhiyu_driver::ChatMessage {
+            role: match m.role {
+                zhiyu_protocol::Role::User => "user".into(),
+                zhiyu_protocol::Role::Assistant => "assistant".into(),
+                zhiyu_protocol::Role::System => "system".into(),
+                zhiyu_protocol::Role::Tool => "tool".into(),
+            },
+            content: m.content,
+            tool_call_id: m.tool_name,
+            tool_calls: vec![],
+        })
+        .collect();
+
+    // persist the user message + stream the assistant reply
+    state.sessions.append_message(mode, session_id, zhiyu_protocol::Role::User, &text, None, None)?;
+
+    let client = zhiyu_driver::default_client();
+    let handle = zhiyu_driver::stream_completion(client, &model, &api_key, &messages, &[], level);
+
+    let mut assistant_text = String::new();
+    let mut reasoning_text = String::new();
+    let mut usage: Option<zhiyu_protocol::Usage> = None;
+    let mut rx = handle.rx;
+    while let Some(chunk) = rx.recv().await {
+        match chunk {
+            zhiyu_driver::SseChunk::TextDelta(d) => {
+                assistant_text.push_str(&d);
+                state.bus.emit(zhiyu_protocol::Event::TextDelta { seq: 0, session_id, delta: d });
+            }
+            zhiyu_driver::SseChunk::ReasoningDelta(d) => {
+                reasoning_text.push_str(&d);
+                state.bus.emit(zhiyu_protocol::Event::ReasoningDelta { seq: 0, session_id, delta: d });
+            }
+            zhiyu_driver::SseChunk::Usage(u) => {
+                usage = Some(u);
+            }
+            zhiyu_driver::SseChunk::Done | zhiyu_driver::SseChunk::ToolCallDelta { .. } | zhiyu_driver::SseChunk::ToolCallArgs { .. } => {}
+        }
+    }
+
+    // report the task result (streaming error surfaces as a status event)
+    if let Err(e) = handle.task.await {
+        state.bus.emit(zhiyu_protocol::Event::Status {
+            seq: 0,
+            session_id: Some(session_id),
+            text: format!("流式请求失败：{e}"),
+        });
+    }
+
+    // persist the assistant message
+    if !assistant_text.is_empty() {
+        state.sessions.append_message(
+            mode,
+            session_id,
+            zhiyu_protocol::Role::Assistant,
+            &assistant_text,
+            if reasoning_text.is_empty() { None } else { Some(&reasoning_text) },
+            None,
+        )?;
+    }
+
+    // usage event for the context manager
+    if let Some(u) = usage {
+        state.bus.emit(zhiyu_protocol::Event::UsageUpdate { seq: 0, session_id, usage: u });
+    }
+
+    let cursor = state.sessions.next_cursor(session_id)?;
+    state.bus.emit(zhiyu_protocol::Event::TurnFinished { seq: 0, session_id, cursor });
     state.sessions.set_streaming(session_id, false);
     Ok(())
 }

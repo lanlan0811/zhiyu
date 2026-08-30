@@ -10,6 +10,7 @@ description = "Local WebSocket/JSON-RPC daemon for 知屿 Zhīyǔ with token aut
 [dependencies]
 zhiyu-protocol = { path = "../protocol" }
 zhiyu-core = { path = "../core" }
+zhiyu-driver = { path = "../driver" }
 zhiyu-browser = { path = "../browser" }
 zhiyu-context = { path = "../context" }
 anyhow.workspace = true
