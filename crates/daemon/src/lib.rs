@@ -7,10 +7,12 @@
 
 pub mod auth;
 pub mod event_bus;
+pub mod handler;
 pub mod paths;
 pub mod server;
 
 pub use event_bus::EventBus;
+pub use handler::{AppState, CoreHandler};
 pub use paths::{data_dir, database_path, knowledge_dir, models_path, settings_path, state_path, token_path};
 pub use server::{serve, RequestHandler};
 

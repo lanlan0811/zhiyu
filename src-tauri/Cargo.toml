@@ -1,0 +1,27 @@
+[package]
+name = "zhiyu"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/lanlan0811/zhiyu"
+description = "知屿 Zhīyǔ — Tauri shell"
+
+[lib]
+name = "zhiyu_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+zhiyu-core = { path = "../crates/core" }
+zhiyu-daemon = { path = "../crates/daemon" }
+zhiyu-browser = { path = "../crates/browser" }
+zhiyu-context = { path = "../crates/context" }
+zhiyu-protocol = { path = "../crates/protocol" }
+anyhow = "1"
