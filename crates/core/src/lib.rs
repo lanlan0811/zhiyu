@@ -6,15 +6,26 @@
 //! turn-level git checkpoints with rollback, the skill library and the
 //! daily-mode knowledge base.
 
-/// Placeholder for the M1 skeleton. Replaced in M4/M5.
+pub mod builtin_models;
+pub mod keyring;
+pub mod model_store;
+pub mod paths;
+
+pub use builtin_models::{builtin_model, builtin_models, BUILTIN_MODEL_IDS};
+pub use keyring::{KeyError, KeyStore};
+pub use model_store::{ModelStore, ModelsFile};
+
+/// The data directory name under the user's home.
 pub fn data_dir_name() -> &'static str {
     ".zhiyu"
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn data_dir_is_zhiyu() {
-        assert_eq!(super::data_dir_name(), ".zhiyu");
+        assert_eq!(data_dir_name(), ".zhiyu");
     }
 }

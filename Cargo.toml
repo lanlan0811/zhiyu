@@ -49,6 +49,9 @@ dirs = "5"
 percent-encoding = "2"
 async-trait = "0.1"
 
+[workspace.dev-dependencies]
+tempfile = "3"
+
 [profile.dev]
 debug = "line-tables-only"
 

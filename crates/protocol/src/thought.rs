@@ -120,6 +120,24 @@ impl ReasoningConfig {
     }
 }
 
+impl Default for ReasoningConfig {
+    fn default() -> Self {
+        ReasoningConfig {
+            enabled: true,
+            default_level: ThoughtLevel::Medium,
+            levels: ThoughtLevel::ALL
+                .iter()
+                .map(|l| ThoughtLevelSpec {
+                    value: *l,
+                    label: l.as_str().to_string(),
+                    description: String::new(),
+                })
+                .collect(),
+            provider_options_by_level: Default::default(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
