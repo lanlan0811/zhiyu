@@ -23,7 +23,7 @@ pub fn build_chat_body(
     thought_level: ThoughtLevel,
 ) -> Value {
     let mut body = json!({
-        "model": model.name_or_id(),
+        "model": name_or_id(model),
         "stream": true,
         "messages": messages.iter().map(chat_message_json).collect::<Vec<_>>(),
     });
@@ -50,7 +50,7 @@ pub fn build_responses_body(
     thought_level: ThoughtLevel,
 ) -> Value {
     let mut body = json!({
-        "model": model.name_or_id(),
+        "model": name_or_id(model),
         "stream": true,
         "input": input.iter().map(chat_message_json).collect::<Vec<_>>(),
     });
@@ -104,6 +104,14 @@ fn chat_message_json(msg: &ChatMessage) -> Value {
     v
 }
 
+fn name_or_id(model: &ModelConfig) -> &str {
+    if model.name.is_empty() {
+        &model.id
+    } else {
+        &model.name
+    }
+}
+
 fn tool_json(tool: &ToolDef) -> Value {
     json!({
         "type": "function",
@@ -113,12 +121,6 @@ fn tool_json(tool: &ToolDef) -> Value {
             "parameters": tool.parameters,
         }
     })
-}
-
-impl ModelConfig {
-    fn name_or_id(&self) -> &str {
-        if self.name.is_empty() { &self.id } else { &self.name }
-    }
 }
 
 #[cfg(test)]

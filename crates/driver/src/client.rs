@@ -173,10 +173,10 @@ mod tests {
 
     #[test]
     fn frame_splitting_crlf() {
-        // "data: {\"a\":1}\r\n\r\n" is 18 bytes
+        // "data: {\"a\":1}\r\n\r\n" — 13 bytes JSON + "\r\n\r\n" = 17 bytes
         let buf = b"data: {\"a\":1}\r\n\r\ndata: {\"b\":2}\r\n\r\n";
-        assert_eq!(find_frame_end(buf), Some(18));
-        assert_eq!(frame_payload(&buf[..18]), r#"{"a":1}"#);
+        assert_eq!(find_frame_end(buf), Some(17));
+        assert_eq!(frame_payload(&buf[..17]), r#"{"a":1}"#);
     }
 
     #[test]
@@ -206,23 +206,22 @@ mod tests {
             let listener = tokio::net::TcpListener::from_std(listener).unwrap();
             let (mut socket, _) = listener.accept().await.unwrap();
             let mut buf = Vec::new();
-            // read headers + body (rough: read until the request is fully sent)
             let mut tmp = [0u8; 4096];
+            // read until the request headers end (body is irrelevant to the test)
             loop {
                 match socket.read(&mut tmp).await {
                     Ok(0) => break,
                     Ok(n) => {
                         buf.extend_from_slice(&tmp[..n]);
-                        // headers end with \r\n\r\n
                         if buf.windows(4).any(|w| w == b"\r\n\r\n") {
-                            // read a little more for the body
-                            let _ = socket.read(&mut tmp).await;
                             break;
                         }
                     }
                     Err(_) => break,
                 }
             }
+            // give the client a beat to finish sending the body, then reply
+            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
             let response = format!(
                 "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
                 body.len(),

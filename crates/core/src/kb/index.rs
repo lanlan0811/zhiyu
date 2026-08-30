@@ -6,7 +6,7 @@ use std::path::Path;
 use rusqlite::{Connection, OptionalExtension, params};
 use uuid::Uuid;
 
-use super::chunking::{Chunk, chunk_document};
+use super::chunking::chunk_document;
 use super::embedding::{Embedder, cosine_similarity};
 use super::ingest::extract_text;
 
@@ -170,22 +170,6 @@ pub fn list_documents(conn: &mut Connection) -> anyhow::Result<Vec<KbDocument>> 
 /// below).
 pub fn delete_document(conn: &mut Connection, doc_id: Uuid) -> anyhow::Result<()> {
     conn.execute("DELETE FROM kb_docs WHERE id = ?1", params![doc_id.to_string()])?;
-    Ok(())
-}
-
-/// The FTS5 delete trigger keeps the virtual table in sync (created in
-/// `open_kb` for new DBs; applied here too for robustness).
-pub fn ensure_fts_triggers(conn: &Connection) -> anyhow::Result<()> {
-    conn.execute_batch(
-        r#"
-        CREATE TRIGGER IF NOT EXISTS kb_chunks_ai AFTER INSERT ON kb_chunks BEGIN
-            INSERT INTO kb_fts(rowid, content) VALUES (new.id, new.content);
-        END;
-        CREATE TRIGGER IF NOT EXISTS kb_chunks_ad AFTER DELETE ON kb_chunks BEGIN
-            INSERT INTO kb_fts(kb_fts, rowid, content) VALUES('delete', old.id, old.content);
-        END;
-        "#,
-    )?;
     Ok(())
 }
 

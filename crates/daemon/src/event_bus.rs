@@ -85,7 +85,6 @@ fn set_seq(event: &mut Event, seq: u64) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use uuid::Uuid;
 
     fn status(text: &str) -> Event {
         Event::Status { seq: 0, session_id: None, text: text.to_string() }

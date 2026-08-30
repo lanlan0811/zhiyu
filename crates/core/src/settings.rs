@@ -30,7 +30,7 @@ pub fn save_settings(path: Option<&PathBuf>, settings: &Settings) -> anyhow::Res
 
 /// Applies a JSON patch (merge) onto settings and persists.
 pub fn patch_settings(path: Option<&PathBuf>, patch: serde_json::Value) -> anyhow::Result<Settings> {
-    let mut settings = load_settings(path.as_ref());
+    let mut settings = load_settings(path);
     // merge patch object onto the settings value
     if let serde_json::Value::Object(map) = patch {
         let mut value = serde_json::to_value(&settings)?;
@@ -41,7 +41,7 @@ pub fn patch_settings(path: Option<&PathBuf>, patch: serde_json::Value) -> anyho
         }
         settings = serde_json::from_value(value)?;
     }
-    save_settings(path.as_ref(), &settings)?;
+    save_settings(path, &settings)?;
     Ok(settings)
 }
 

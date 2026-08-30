@@ -6,7 +6,7 @@
 
 use std::sync::Arc;
 
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 use zhiyu_daemon::event_bus::EventBus;
 use zhiyu_daemon::handler::{AppState, CoreHandler};
 
@@ -27,11 +27,11 @@ fn main() {
             let bus = state.bus.clone();
 
             // token: generate once, persist under ~/.zhiyu/token
-            let token = std::fs::read_to_string(zhiyu_core::paths::token_path())
+            let token = std::fs::read_to_string(zhiyu_daemon::token_path())
                 .unwrap_or_else(|_| {
                     let t = zhiyu_daemon::auth::generate_token();
-                    std::fs::create_dir_all(zhiyu_core::paths::data_dir()).ok();
-                    let _ = std::fs::write(zhiyu_core::paths::token_path(), &t);
+                    std::fs::create_dir_all(zhiyu_daemon::data_dir()).ok();
+                    let _ = std::fs::write(zhiyu_daemon::token_path(), &t);
                     t
                 });
 

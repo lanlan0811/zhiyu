@@ -6,6 +6,11 @@ license = "MIT"
 repository = "https://github.com/lanlan0811/zhiyu"
 description = "知屿 Zhīyǔ — Tauri shell"
 
+# Standalone crate: it is NOT a member of the root workspace (tauri-action
+# builds it on its own). An empty [workspace] table marks it as the root of
+# its own (single-crate) workspace.
+[workspace]
+
 [lib]
 name = "zhiyu_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]

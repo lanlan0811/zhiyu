@@ -47,7 +47,7 @@ impl UsageTracker {
     }
 
     pub fn source(&self, source: UsageSource) -> u64 {
-        self.breakdown.get(source.as_str()).map(|v| *v).unwrap_or(0)
+        self.breakdown.get(source.as_str()).copied().unwrap_or(0)
     }
 
     /// The aggregate used tokens: the sum of the 7 sources, falling back to

@@ -206,7 +206,7 @@ impl Store {
                 |r| r.get(0),
             )
             .optional()?;
-        Ok(max.map(|m| m as u64 + 1).unwrap_or(0))
+        Ok(max.map_or(0, |m| m as u64 + 1))
     }
 
     /// Messages from a cursor onward (resume/replay).

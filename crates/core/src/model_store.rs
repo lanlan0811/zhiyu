@@ -2,7 +2,7 @@
 //! custom models, persisted to `~/.zhiyu/models.json`.
 
 use std::collections::BTreeMap;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use zhiyu_protocol::ModelConfig;
 

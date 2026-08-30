@@ -23,7 +23,14 @@ pub fn apply_patch(body: &mut Value, patch: &RequestPatch) {
 }
 
 /// Builds the default chat-protocol patch for a level: `reasoning_effort`.
+/// `off` removes the effort field entirely (reasoning disabled).
 pub fn chat_patch(level: ThoughtLevel) -> RequestPatch {
+    if level == ThoughtLevel::Off {
+        return RequestPatch {
+            set: vec![],
+            unset: vec![vec!["reasoning_effort".into()]],
+        };
+    }
     RequestPatch {
         set: vec![zhiyu_protocol::PathValue {
             path: vec!["reasoning_effort".into()],
@@ -34,8 +41,14 @@ pub fn chat_patch(level: ThoughtLevel) -> RequestPatch {
 }
 
 /// Builds the default responses-protocol patch for a level:
-/// `reasoning.effort`.
+/// `reasoning.effort`. `off` removes the reasoning block entirely.
 pub fn responses_patch(level: ThoughtLevel) -> RequestPatch {
+    if level == ThoughtLevel::Off {
+        return RequestPatch {
+            set: vec![],
+            unset: vec![vec!["reasoning".into(), "effort".into()]],
+        };
+    }
     RequestPatch {
         set: vec![zhiyu_protocol::PathValue {
             path: vec!["reasoning".into(), "effort".into()],
