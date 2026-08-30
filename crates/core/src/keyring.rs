@@ -185,7 +185,7 @@ mod dpapi {
     use super::KeyError;
 
     pub fn protect(data: &[u8]) -> Result<Vec<u8>, KeyError> {
-        let mut in_blob = CRYPT_INTEGER_BLOB { cbData: data.len() as u32, pbData: data.as_ptr() as *mut u8 };
+        let in_blob = CRYPT_INTEGER_BLOB { cbData: data.len() as u32, pbData: data.as_ptr() as *mut u8 };
         let mut out_blob = CRYPT_INTEGER_BLOB { cbData: 0, pbData: std::ptr::null_mut() };
         let ok = unsafe {
             CryptProtectData(
@@ -207,7 +207,7 @@ mod dpapi {
     }
 
     pub fn unprotect(cipher: &[u8]) -> Result<Vec<u8>, KeyError> {
-        let mut in_blob = CRYPT_INTEGER_BLOB { cbData: cipher.len() as u32, pbData: cipher.as_ptr() as *mut u8 };
+        let in_blob = CRYPT_INTEGER_BLOB { cbData: cipher.len() as u32, pbData: cipher.as_ptr() as *mut u8 };
         let mut out_blob = CRYPT_INTEGER_BLOB { cbData: 0, pbData: std::ptr::null_mut() };
         let ok = unsafe {
             CryptUnprotectData(

@@ -86,7 +86,7 @@ impl KnowledgeBase {
     /// Rebuilds the index from the documents folder: wipes all documents then
     /// re-ingests every supported file under `folder` (recursively).
     pub fn reindex(&self, folder: &PathBuf) -> anyhow::Result<usize> {
-        let mut conn = self.conn.lock().unwrap();
+        let conn = self.conn.lock().unwrap();
         conn.execute_batch("DELETE FROM kb_docs; DELETE FROM kb_chunks; DELETE FROM kb_vectors;")?;
         drop(conn);
         let mut count = 0;

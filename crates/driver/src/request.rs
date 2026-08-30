@@ -1,7 +1,7 @@
 //! Request body construction for the two OpenAI protocols.
 
 use serde_json::{json, Value};
-use zhiyu_protocol::{ApiFormat, ModelConfig, RequestPatch, ThoughtLevel};
+use zhiyu_protocol::{ModelConfig, ThoughtLevel};
 
 use crate::thought_level::apply_patch;
 
@@ -126,7 +126,7 @@ fn tool_json(tool: &ToolDef) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use zhiyu_protocol::ReasoningConfig;
+    use zhiyu_protocol::{ApiFormat, ReasoningConfig, RequestPatch};
 
     fn model(api_format: ApiFormat) -> ModelConfig {
         ModelConfig {

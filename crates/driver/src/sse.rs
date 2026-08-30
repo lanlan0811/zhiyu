@@ -108,7 +108,7 @@ fn parse_chat_chunk(
         return Ok(());
     };
     for choice in choices {
-        let Some(index) = choice.get("index").and_then(|i| i.as_u64()) else {
+        let Some(_index) = choice.get("index").and_then(|i| i.as_u64()) else {
             continue;
         };
         let Some(delta) = choice.get("delta") else { continue };
