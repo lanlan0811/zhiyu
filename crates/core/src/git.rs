@@ -100,6 +100,11 @@ mod tests {
         run(dir.path(), &["init", "-b", "main"]).unwrap();
         run(dir.path(), &["config", "user.email", "test@zhiyu.local"]).unwrap();
         run(dir.path(), &["config", "user.name", "Zhiyu Test"]).unwrap();
+        // an initial commit gives the repository a real HEAD so
+        // `rev-parse --abbrev-ref HEAD` works on every git version
+        fs::write(dir.path().join(".gitkeep"), "").unwrap();
+        run(dir.path(), &["add", "-A"]).unwrap();
+        run(dir.path(), &["commit", "-m", "init"]).unwrap();
         dir
     }
 

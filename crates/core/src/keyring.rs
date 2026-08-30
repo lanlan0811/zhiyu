@@ -268,9 +268,9 @@ mod tests {
         store.set_default(provider, &second).unwrap();
         assert_eq!(store.default_key(provider).unwrap(), "key-two");
 
-        // rotate → wraps back to the first
+        // rotate → wraps back to the first key (id k1)
         let rotated = store.rotate(provider).unwrap();
-        assert_eq!(rotated, Some("key-one".to_string()));
+        assert_eq!(rotated, Some("k1".to_string()));
         assert_eq!(store.default_key(provider).unwrap(), "key-one");
 
         // delete the second key
