@@ -7,6 +7,11 @@ repository.workspace = true
 authors.workspace = true
 description = "Core engine for 知屿 Zhīyǔ: sessions, persistence, workspaces, git checkpoints, skills and knowledge base."
 
+[features]
+# Real local embeddings via fastembed (onnxruntime). Off by default; the
+# hashed embedder keeps the minimal build and CI fast.
+fastembed = ["dep:fastembed"]
+
 [dependencies]
 zhiyu-protocol = { path = "../protocol" }
 zhiyu-context = { path = "../context" }
@@ -25,6 +30,7 @@ tracing.workspace = true
 anyhow.workspace = true
 walkdir = "2"
 zip = { version = "2", default-features = false, features = ["deflate"] }
+fastembed = { version = "4", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_Security_Cryptography"] }

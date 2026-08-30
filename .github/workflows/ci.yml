@@ -56,12 +56,12 @@ jobs:
         shell: bash
         run: |
           set +e
-          cargo test --workspace > test.log 2>&1
+          cargo test --workspace --message-format=short > test.log 2>&1
           code=$?
           echo "test_exit=$code" >> "$GITHUB_OUTPUT"
           echo "cargo test exit code: $code"
-          # surface failing test names and assertion messages as annotations
-          grep -E "^---- |panicked at|assertion `.*` failed|test result:|failures:$" test.log | head -40 | while IFS= read -r line; do
+          # surface compiler errors and failing tests as annotations
+          grep -E "error\[|error:|^---- |panicked at|test result:" test.log | head -40 | while IFS= read -r line; do
             echo "::error::${line}"
           done
           exit 0
