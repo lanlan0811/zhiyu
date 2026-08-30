@@ -28,6 +28,43 @@ jobs:
       - name: Build release
         run: cargo build --release --workspace
 
+      - name: Build tauri app (release)
+        id: tauri
+        shell: bash
+        run: |
+          set +e
+          cargo build --release --manifest-path src-tauri/Cargo.toml > tauri-build.log 2>&1
+          code=$?
+          echo "tauri_exit=$code" >> "$GITHUB_OUTPUT"
+          echo "cargo tauri release build exit code: $code"
+          grep -E "error\[|error:|warning: " tauri-build.log | head -60 | while IFS= read -r line; do
+            echo "::error::${line}"
+          done
+          if ! grep -qE "error\[|error:" tauri-build.log; then
+            tail -50 tauri-build.log | while IFS= read -r line; do
+              echo "::error::${line}"
+            done
+          fi
+          exit 0
+
+      - name: Fail if tauri build failed
+        if: steps.tauri.outputs.tauri_exit != '0'
+        shell: bash
+        run: |
+          set +e
+          echo "=== tauri-build.log tail (as annotations) ==="
+          tail -80 tauri-build.log | while IFS= read -r line; do
+            echo "::error::${line}"
+          done
+          exit 1
+
+      - name: Upload tauri build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-build-log
+          path: ${{ github.workspace }}/tauri-build.log
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
