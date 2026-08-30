@@ -44,11 +44,7 @@ jobs:
             echo "::error::${line}"
           done
           echo "=== build-script error context ==="
-          grep -n -A 30 "failed to run custom build command" tauri-build.log | head -90 | while IFS= read -r line; do
-            echo "::error::${line}"
-          done
-          echo "=== tauri-build.log tail ==="
-          tail -120 tauri-build.log | while IFS= read -r line; do
+          awk '/failed to run custom build command/{found=1} found{print; if(++c>45) exit}' tauri-build.log | while IFS= read -r line; do
             echo "::error::${line}"
           done
           exit 0
