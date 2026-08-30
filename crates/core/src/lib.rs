@@ -8,6 +8,7 @@
 
 pub mod builtin_models;
 pub mod git;
+pub mod kb;
 pub mod keyring;
 pub mod model_store;
 pub mod paths;
@@ -19,6 +20,7 @@ pub mod workspace;
 
 pub use builtin_models::{builtin_model, builtin_models, BUILTIN_MODEL_IDS};
 pub use git::{checkpoint_ref, create_checkpoint, rollback};
+pub use kb::{KnowledgeBase, SearchHit};
 pub use keyring::{KeyError, KeyStore};
 pub use model_store::{ModelStore, ModelsFile};
 pub use sessions::{SessionManager, UpdateSender};
