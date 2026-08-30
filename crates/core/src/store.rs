@@ -14,10 +14,21 @@ pub fn open_db(path: &Path) -> anyhow::Result<Connection> {
         std::fs::create_dir_all(dir)?;
     }
     let conn = Connection::open(path)?;
-    conn.pragma_update(None, "journal_mode", "WAL")?;
-    conn.pragma_update(None, "foreign_keys", "ON")?;
+    set_pragma(&conn, "journal_mode", "WAL")?;
+    set_pragma(&conn, "foreign_keys", "ON")?;
     migrate(&conn)?;
     Ok(conn)
+}
+
+/// Runs a pragma that returns a row (e.g. `journal_mode=WAL`) without
+/// tripping rusqlite's extra_check "Execute returned results" guard, by
+/// draining the result through query().
+fn set_pragma(conn: &Connection, name: &str, value: &str) -> anyhow::Result<()> {
+    let sql = format!("PRAGMA {name}={value}");
+    let mut stmt = conn.prepare(&sql)?;
+    let mut rows = stmt.query([])?;
+    while rows.next()?.is_some() {}
+    Ok(())
 }
 
 /// Applies the schema. Sessions are stored per mode

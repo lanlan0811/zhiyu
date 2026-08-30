@@ -39,7 +39,7 @@ pub struct SearchHit {
 pub fn open_kb(dir: &Path) -> anyhow::Result<Connection> {
     std::fs::create_dir_all(dir)?;
     let conn = Connection::open(dir.join("zhiyu_kb.sqlite"))?;
-    conn.pragma_update(None, "journal_mode", "WAL")?;
+    set_pragma(&conn, "journal_mode", "WAL")?;
     conn.execute_batch(
         r#"
         CREATE TABLE IF NOT EXISTS kb_docs (
@@ -86,6 +86,16 @@ fn fts5_available(conn: &Connection) -> bool {
         |_| Ok(true),
     )
     .unwrap_or(false)
+}
+
+/// Runs a pragma that returns a row (e.g. `journal_mode=WAL`) without
+/// tripping rusqlite's extra_check "Execute returned results" guard.
+fn set_pragma(conn: &Connection, name: &str, value: &str) -> anyhow::Result<()> {
+    let sql = format!("PRAGMA {name}={value}");
+    let mut stmt = conn.prepare(&sql)?;
+    let mut rows = stmt.query([])?;
+    while rows.next()?.is_some() {}
+    Ok(())
 }
 
 /// The FTS5 triggers keep the virtual table in sync with `kb_chunks`.
