@@ -196,13 +196,15 @@ pub fn list_documents(conn: &mut Connection) -> anyhow::Result<Vec<KbDocument>> 
 /// FTS5 'delete' command via a trigger trips rusqlite's extra_check).
 pub fn delete_document(conn: &mut Connection, doc_id: Uuid) -> anyhow::Result<()> {
     // collect the chunk rowids + contents for FTS cleanup
-    let mut stmt = conn.prepare("SELECT id, content FROM kb_chunks WHERE doc_id = ?1")?;
-    let mut rows = stmt.query(params![doc_id.to_string()])?;
-    let mut to_delete: Vec<(i64, String)> = Vec::new();
-    while let Some(row) = rows.next()? {
-        to_delete.push((row.get(0)?, row.get(1)?));
-    }
-    drop(stmt);
+    let to_delete: Vec<(i64, String)> = {
+        let mut stmt = conn.prepare("SELECT id, content FROM kb_chunks WHERE doc_id = ?1")?;
+        let mut rows = stmt.query(params![doc_id.to_string()])?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next()? {
+            out.push((row.get(0)?, row.get(1)?));
+        }
+        out
+    };
 
     for (rowid, content) in &to_delete {
         // FTS5 delete command: INSERT INTO fts(fts, rowid, col) VALUES('delete', rowid, content)
