@@ -127,3 +127,10 @@ jobs:
         with:
           name: test-log
           path: ${{ github.workspace }}/test.log
+
+      - name: Upload clippy log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clippy-log
+          path: ${{ github.workspace }}/clippy.log
