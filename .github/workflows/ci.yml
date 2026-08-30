@@ -84,7 +84,35 @@ jobs:
           exit 1
 
       - name: Clippy
-        run: cargo clippy --workspace -- -D warnings
+        id: clippy
+        shell: bash
+        run: |
+          set +e
+          cargo clippy --workspace -- -D warnings > clippy.log 2>&1
+          code=$?
+          echo "clippy_exit=$code" >> "$GITHUB_OUTPUT"
+          echo "cargo clippy exit code: $code"
+          grep -E "^(error|warning)\[|^error:|^warning:|--> " clippy.log | head -80 | while IFS= read -r line; do
+            echo "::error::${line}"
+          done
+          # if nothing matched, dump the tail
+          if ! grep -qE "^error\[|^error:|^warning:" clippy.log; then
+            tail -60 clippy.log | while IFS= read -r line; do
+              echo "::error::${line}"
+            done
+          fi
+          exit 0
+
+      - name: Fail if clippy failed
+        if: steps.clippy.outputs.clippy_exit != '0'
+        shell: bash
+        run: |
+          set +e
+          echo "=== clippy.log tail (as annotations) ==="
+          tail -80 clippy.log | while IFS= read -r line; do
+            echo "::error::${line}"
+          done
+          exit 1
 
       - name: Upload build log
         if: always()
