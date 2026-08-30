@@ -133,7 +133,11 @@ impl SessionManager {
     pub fn pop_turn(&self, session_id: Uuid) -> anyhow::Result<Option<String>> {
         let mut live = self.live.lock().unwrap();
         let s = live.get_mut(&session_id).ok_or_else(|| anyhow::anyhow!("session not open"))?;
-        Ok(s.queue.drain(..1).next())
+        let popped = s.queue.first().cloned();
+        if popped.is_some() {
+            s.queue.remove(0);
+        }
+        Ok(popped)
     }
 
     /// Transient thought-level override for the next turn.

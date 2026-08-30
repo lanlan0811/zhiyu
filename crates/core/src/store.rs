@@ -65,7 +65,8 @@ fn migrate(conn: &Connection) -> anyhow::Result<()> {
     Ok(())
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SessionRow {
     pub id: Uuid,
     pub title: String,

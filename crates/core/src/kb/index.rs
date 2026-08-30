@@ -219,7 +219,7 @@ pub fn hybrid_search(
             .collect();
         let sim = cosine_similarity(&q_vec, &super::embedding::Embedding { dim: dim as usize, values });
         if sim > 0.01 {
-            vec_hits.push((chunk_id, sim));
+            vec_hits.push((chunk_id as u64, sim));
         }
     }
     vec_hits.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
