@@ -110,7 +110,7 @@ async fn handle_connection(
             msg = source.next() => {
                 match msg {
                     Some(Ok(WsMessage::Text(text))) => {
-                        let req: Inbound = match serde_json::from_str(&text) {
+                        let req = match serde_json::from_str::<Inbound>(&text) {
                             Ok(Inbound::Request(req)) => req,
                             Ok(Inbound::Hello(_)) => continue,
                             Err(_) => {
@@ -164,7 +164,8 @@ async fn reject(sink: &mut (impl SinkExt<WsMessage> + Unpin), code: i32, message
         result: None,
         error: Some(ErrorInfo { code, message: message.to_string() }),
     })))
-    .await?;
+    .await
+    .map_err(|e| anyhow::anyhow!("failed to send reject response: {e}"))?;
     Ok(())
 }
 
