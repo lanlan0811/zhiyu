@@ -1,0 +1,15 @@
+[package]
+name = "sub2api"
+version = "0.1.0"
+edition = "2024"
+description = "Managed cloud account, gateway routing, and agent CLI installation for the Waku fork"
+license = "GPL-3.0-only"
+
+[dependencies]
+# Surgical TOML edits that keep the user's comments and key order intact,
+# the same crate cc-switch uses for Codex/Grok config writes.
+toml_edit = "0.23"
+anyhow = "1.0"
+dirs = "6.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"

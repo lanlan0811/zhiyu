@@ -1,0 +1,24 @@
+target
+.waku-cache
+
+# The pre-fork TypeScript client, kept in the working tree for reference only.
+# It carries its own .git and its own node_modules; tracking it here would add
+# six figures of files to a repo that has nothing to do with it.
+old-code/
+cc-switch-main/
+
+.DS_Store
+*.log
+.env
+
+/dist
+node_modules
+temp/
+
+.DS_Store
+
+.zcode/
+
+.codex/
+
+AGENTS.md
