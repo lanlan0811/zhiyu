@@ -56,18 +56,16 @@ jobs:
         shell: bash
         run: |
           set +e
-          cargo build --manifest-path src-tauri/Cargo.toml > tauri.log 2>&1
+          # -j2 limits parallel rustc jobs to avoid CI runner OOM during the
+          # heavy tauri dependency chain (wry/tauri-runtime/softbuffer).
+          cargo build -j2 --manifest-path src-tauri/Cargo.toml > tauri.log 2>&1
           code=$?
           echo "tauri_exit=$code" >> "$GITHUB_OUTPUT"
           echo "cargo tauri build exit code: $code"
-          grep -E "error\[|error:|warning: " tauri.log | head -60 | while IFS= read -r line; do
+          echo "=== full tauri.log (annotations) ==="
+          cat tauri.log | head -120 | while IFS= read -r line; do
             echo "::error::${line}"
           done
-          if ! grep -qE "error\[|error:" tauri.log; then
-            tail -50 tauri.log | while IFS= read -r line; do
-              echo "::error::${line}"
-            done
-          fi
           exit 0
 
       - name: Fail if tauri build failed
