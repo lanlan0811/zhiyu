@@ -63,7 +63,7 @@ pub fn open_kb(dir: &Path) -> anyhow::Result<Connection> {
             values BLOB NOT NULL
         );
         CREATE VIRTUAL TABLE IF NOT EXISTS kb_fts USING fts5(
-            content, content='kb_chunks', content_rowid='id', tokenize='unicode61'
+            content, tokenize='unicode61'
         );
         "#,
     )?;
@@ -166,10 +166,11 @@ pub fn list_documents(conn: &mut Connection) -> anyhow::Result<Vec<KbDocument>> 
     Ok(out)
 }
 
-/// Deletes a document and its chunks (FTS rows are removed via triggers
-/// below).
+/// Deletes a document and its chunks (FTS rows are removed via the
+/// `kb_chunks_ad` trigger).
 pub fn delete_document(conn: &mut Connection, doc_id: Uuid) -> anyhow::Result<()> {
     conn.execute("DELETE FROM kb_docs WHERE id = ?1", params![doc_id.to_string()])?;
+    conn.execute("DELETE FROM kb_chunks WHERE doc_id = ?1", params![doc_id.to_string()])?;
     Ok(())
 }
 
