@@ -29,8 +29,26 @@ jobs:
 
       - name: Build workspace
         id: build
-        run: cargo build --workspace 2>&1 | tee /tmp/build.log; exit ${PIPESTATUS[0]}
         shell: bash
+        run: |
+          cargo build --workspace > /tmp/build.log 2>&1
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Show build result
+        if: always()
+        shell: bash
+        run: |
+          code="${{ steps.build.outputs.exit_code }}"
+          echo "cargo build exit code: $code"
+          if [ "$code" != "0" ]; then
+            tail -80 /tmp/build.log
+          fi
+
+      - name: Fail if build failed
+        if: always() && steps.build.outputs.exit_code != '0'
+        shell: bash
+        run: exit 1
 
       - name: Test workspace
         run: cargo test --workspace
@@ -38,8 +56,8 @@ jobs:
       - name: Clippy
         run: cargo clippy --workspace -- -D warnings
 
-      - name: Upload build log on failure
-        if: always() && steps.build.outcome == 'failure'
+      - name: Upload build log
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-log
