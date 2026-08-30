@@ -79,7 +79,7 @@ impl BrowserService {
         result
     }
 
-    fn apply(&self, session: Uuid, command: &BrowserCommand) -> (String, Value, bool) {
+    fn apply(&self, session: Uuid, command: &BrowserCommand) -> (&'static str, Value, bool) {
         let mut tabs = self.tabs.lock().unwrap();
         let active = tabs.active();
         match command {
@@ -128,7 +128,7 @@ impl BrowserService {
     }
 }
 
-fn command_method_name(command: &BrowserCommand) -> String {
+fn command_method_name(command: &BrowserCommand) -> &'static str {
     match command {
         BrowserCommand::Navigate { .. } => "navigate",
         BrowserCommand::Back => "back",
@@ -156,7 +156,6 @@ fn command_method_name(command: &BrowserCommand) -> String {
         BrowserCommand::ViewportSet { .. } => "viewportSet",
         BrowserCommand::ViewportReset => "viewportReset",
     }
-    .to_string()
 }
 
 #[cfg(test)]

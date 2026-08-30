@@ -158,7 +158,7 @@ pub fn resolve_ref_in_snapshot(root: &SnapshotNode, target_ref: &str) -> Option<
             // SCRIPT_RESOLVE in a live page. This fallback returns a marker.
             return Some((0.0, 0.0));
         }
-        queue.extend(node.children.iter().cloned());
+        queue.extend(node.children.iter());
     }
     None
 }
