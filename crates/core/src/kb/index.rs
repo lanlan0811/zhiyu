@@ -60,7 +60,7 @@ pub fn open_kb(dir: &Path) -> anyhow::Result<Connection> {
         CREATE TABLE IF NOT EXISTS kb_vectors (
             chunk_id INTEGER PRIMARY KEY,
             dim INTEGER NOT NULL,
-            values BLOB NOT NULL
+            vec_data BLOB NOT NULL
         );
         "#,
     )?;
@@ -158,13 +158,13 @@ pub fn ingest_document(
 /// Vector table lives in a separate table (dim + serialized floats).
 fn store_vectors(conn: &mut Connection, vectors: &[(u64, Vec<f32>)]) -> anyhow::Result<()> {
     conn.execute_batch(
-        "CREATE TABLE IF NOT EXISTS kb_vectors (chunk_id INTEGER PRIMARY KEY, dim INTEGER NOT NULL, values BLOB NOT NULL);",
+        "CREATE TABLE IF NOT EXISTS kb_vectors (chunk_id INTEGER PRIMARY KEY, dim INTEGER NOT NULL, vec_data BLOB NOT NULL);",
     )?;
     let tx = conn.transaction()?;
     for (chunk_id, values) in vectors {
         let blob: Vec<u8> = values.iter().flat_map(|f| f.to_le_bytes()).collect();
         tx.execute(
-            "INSERT OR REPLACE INTO kb_vectors (chunk_id, dim, values) VALUES (?1, ?2, ?3)",
+            "INSERT OR REPLACE INTO kb_vectors (chunk_id, dim, vec_data) VALUES (?1, ?2, ?3)",
             params![*chunk_id as i64, values.len() as i64, blob],
         )?;
     }
@@ -233,7 +233,7 @@ pub fn hybrid_search(
     let q_vec = embedder.embed(query);
     let mut vec_hits: Vec<(u64, f32)> = Vec::new();
     {
-        let mut stmt = conn.prepare("SELECT chunk_id, dim, values FROM kb_vectors")?;
+        let mut stmt = conn.prepare("SELECT chunk_id, dim, vec_data FROM kb_vectors")?;
         let mut rows = stmt.query([])?;
         while let Some(row) = rows.next()? {
             let chunk_id: i64 = row.get(0)?;
