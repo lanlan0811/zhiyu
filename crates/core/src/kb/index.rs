@@ -66,12 +66,13 @@ pub fn open_kb(dir: &Path) -> anyhow::Result<Connection> {
     )?;
     // FTS5 virtual table: CREATE VIRTUAL TABLE returns a result row, which
     // rusqlite's execute/execute_batch reject when extra_check is on
-    // (bundled-full), so prepare + step it manually.
+    // (bundled-full), so run it through query() and drain the rows.
     if fts5_available(&conn) {
-        let stmt = conn.prepare(
+        let mut stmt = conn.prepare(
             "CREATE VIRTUAL TABLE IF NOT EXISTS kb_fts USING fts5(content, tokenize='unicode61')",
         )?;
-        let _ = stmt.step();
+        let mut rows = stmt.query([])?;
+        while rows.next()?.is_some() {}
     }
     ensure_fts_triggers(&conn)?;
     Ok(conn)
