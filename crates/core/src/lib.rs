@@ -16,6 +16,7 @@ pub mod sessions;
 pub mod settings;
 pub mod skills;
 pub mod store;
+pub mod thought_runtime;
 pub mod workspace;
 
 pub use builtin_models::{builtin_model, builtin_models, BUILTIN_MODEL_IDS};
@@ -26,6 +27,7 @@ pub use model_store::{ModelStore, ModelsFile};
 pub use sessions::{SessionManager, UpdateSender};
 pub use settings::{default_model_for, default_thought_level_for, load_settings, patch_settings, save_settings};
 pub use store::{open_db, SessionRow, Store};
+pub use thought_runtime::{ModelSwitchResult, effective_level, switch_model_config};
 pub use workspace::{list_dir, read_file, resolve, write_file, WorkspaceError};
 
 /// The data directory name under the user's home.

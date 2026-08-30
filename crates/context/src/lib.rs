@@ -5,15 +5,27 @@
 //! compacts sessions with a summary message and timeline separator, and
 //! guards model switching when the used context would exceed the target.
 
-/// Placeholder for the M1 skeleton. Replaced in M6.
+pub mod compact;
+pub mod guard;
+pub mod usage;
+pub mod window;
+
+pub use compact::{CompactionPlan, CompactionSeparator, compacted_transcript, plan_compaction, should_auto_compact};
+pub use guard::{GuardResult, evaluate_switch};
+pub use usage::UsageTracker;
+pub use window::{DEFAULT_WINDOW, ONE_MILLION, resolve_context_window};
+
+/// Default window when nothing is configured.
 pub fn default_window() -> u64 {
-    200_000
+    DEFAULT_WINDOW
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn default_window_is_200k() {
-        assert_eq!(super::default_window(), 200_000);
+        assert_eq!(default_window(), 200_000);
     }
 }
