@@ -28,10 +28,19 @@ jobs:
         run: npm run build
 
       - name: Build workspace
-        run: cargo build --workspace
+        id: build
+        run: cargo build --workspace 2>&1 | tee /tmp/build.log; exit ${PIPESTATUS[0]}
+        shell: bash
 
       - name: Test workspace
         run: cargo test --workspace
 
       - name: Clippy
         run: cargo clippy --workspace -- -D warnings
+
+      - name: Upload build log on failure
+        if: always() && steps.build.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: /tmp/build.log
