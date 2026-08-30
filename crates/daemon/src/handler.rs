@@ -32,7 +32,7 @@ pub struct AppState {
 impl AppState {
     /// Opens everything under `~/.zhiyu` (injectable root for tests).
     pub fn open(root: Option<&PathBuf>) -> anyhow::Result<AppState> {
-        let root = root.cloned().unwrap_or_else(|| zhiyu_core::paths::data_dir());
+        let root = root.cloned().unwrap_or_else(zhiyu_core::paths::data_dir);
         std::fs::create_dir_all(&root)?;
         let db_path = root.join("zhiyu.db");
         let store = Mutex::new(Store::open(&db_path)?);

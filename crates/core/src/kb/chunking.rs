@@ -69,7 +69,7 @@ fn flush(current: &mut String, chunks: &mut Vec<Chunk>, heading: &Option<String>
 
 /// Splits a string at a char boundary, returning (head, tail).
 fn split_at_char(s: &str, char_index: usize) -> (String, String) {
-    for (i, (count, _)) in s.char_indices().enumerate() {
+    for (count, (i, _)) in s.char_indices().enumerate() {
         if count == char_index {
             return (s[..i].to_string(), s[i..].to_string());
         }
