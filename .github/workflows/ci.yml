@@ -25,17 +25,17 @@ jobs:
         working-directory: web
         run: npm run build
 
-      - name: Build workspace (log errors to annotations)
+      - name: Build workspace
         id: build
         shell: bash
         run: |
-          set -o pipefail
-          cargo build --workspace --message-format=short 2>&1 | tee /tmp/build.log | grep -E "error|warning: unused|warning: " || true
-          code=${PIPESTATUS[0]}
+          cargo build --workspace --message-format=short > build.log 2>&1
+          code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
-          # surface each error line as a github annotation so it appears in check-run annotations
-          grep -E "^error" /tmp/build.log | head -40 | while IFS= read -r line; do
-            echo "::error file=ci.yml::$line"
+          echo "cargo exit code: $code"
+          # surface error lines as annotations
+          grep -E "error\[|error:" build.log | head -60 | while IFS= read -r line; do
+            echo "::error::${line}"
           done
           exit 0
 
@@ -43,8 +43,10 @@ jobs:
         if: steps.build.outputs.exit_code != '0'
         shell: bash
         run: |
-          echo "=== last 100 lines of build log ==="
-          tail -100 /tmp/build.log
+          echo "=== build.log tail (as annotations) ==="
+          tail -100 build.log | while IFS= read -r line; do
+            echo "::error::${line}"
+          done
           exit 1
 
       - name: Test workspace
@@ -58,4 +60,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-log
-          path: D:\a\zhiyu\zhiyu\build.log
+          path: build.log
