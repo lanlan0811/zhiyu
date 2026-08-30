@@ -148,7 +148,7 @@ impl RequestHandler for CoreHandler {
             }
             Command::KeyList { provider } => {
                 let keys = match provider {
-                    Some(p) => vec![state.keys.load(&p).ok()].into_iter().flatten().collect::<Vec<_>>(),
+                    Some(p) => state.keys.load(&p).ok().into_iter().collect::<Vec<_>>(),
                     None => {
                         // list all known providers
                         let mut all = Vec::new();
