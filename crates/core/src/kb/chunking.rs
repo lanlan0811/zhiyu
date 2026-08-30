@@ -113,7 +113,7 @@ mod tests {
 
     #[test]
     fn plain_text_without_headings_chunks() {
-        let text = (0..3000).map(|i| (b'a' + (i % 26)) as char).collect::<String>();
+        let text = (0..3000).map(|i| char::from(b'a' + (i % 26) as u8)).collect::<String>();
         let chunks = chunk_document(&text);
         assert!(chunks.len() >= 2);
         assert!(chunks[0].heading.is_none());
