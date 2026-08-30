@@ -98,15 +98,14 @@ fn set_pragma(conn: &Connection, name: &str, value: &str) -> anyhow::Result<()> 
     Ok(())
 }
 
-/// The FTS5 triggers keep the virtual table in sync with `kb_chunks`.
+/// The FTS5 insert trigger keeps the virtual table in sync with `kb_chunks`.
+/// Deletes are handled explicitly in `delete_document` (the FTS5 'delete'
+/// command through a trigger trips rusqlite's extra_check).
 pub fn ensure_fts_triggers(conn: &Connection) -> anyhow::Result<()> {
     conn.execute_batch(
         r#"
         CREATE TRIGGER IF NOT EXISTS kb_chunks_ai AFTER INSERT ON kb_chunks BEGIN
             INSERT INTO kb_fts(rowid, content) VALUES (new.id, new.content);
-        END;
-        CREATE TRIGGER IF NOT EXISTS kb_chunks_ad AFTER DELETE ON kb_chunks BEGIN
-            INSERT INTO kb_fts(kb_fts, rowid, content) VALUES('delete', old.id, old.content);
         END;
         "#,
     )?;
@@ -193,9 +192,26 @@ pub fn list_documents(conn: &mut Connection) -> anyhow::Result<Vec<KbDocument>> 
     Ok(out)
 }
 
-/// Deletes a document and its chunks (FTS rows are removed via the
-/// `kb_chunks_ad` trigger).
+/// Deletes a document and its chunks, removing the FTS rows explicitly (the
+/// FTS5 'delete' command via a trigger trips rusqlite's extra_check).
 pub fn delete_document(conn: &mut Connection, doc_id: Uuid) -> anyhow::Result<()> {
+    // collect the chunk rowids + contents for FTS cleanup
+    let mut stmt = conn.prepare("SELECT id, content FROM kb_chunks WHERE doc_id = ?1")?;
+    let mut rows = stmt.query(params![doc_id.to_string()])?;
+    let mut to_delete: Vec<(i64, String)> = Vec::new();
+    while let Some(row) = rows.next()? {
+        to_delete.push((row.get(0)?, row.get(1)?));
+    }
+    drop(stmt);
+
+    for (rowid, content) in &to_delete {
+        // FTS5 delete command: INSERT INTO fts(fts, rowid, col) VALUES('delete', rowid, content)
+        let mut stmt = conn.prepare(
+            "INSERT INTO kb_fts(kb_fts, rowid, content) VALUES('delete', ?1, ?2)",
+        )?;
+        let mut rows = stmt.query(params![rowid, content])?;
+        while rows.next()?.is_some() {}
+    }
     conn.execute("DELETE FROM kb_docs WHERE id = ?1", params![doc_id.to_string()])?;
     conn.execute("DELETE FROM kb_chunks WHERE doc_id = ?1", params![doc_id.to_string()])?;
     Ok(())
