@@ -62,25 +62,21 @@ jobs:
           code=$?
           echo "tauri_exit=$code" >> "$GITHUB_OUTPUT"
           echo "cargo tauri build exit code: $code"
-          echo "=== error lines ==="
-          grep -nE "error|panicked|failed|cannot find|unresolved" tauri.log | head -40 | while IFS= read -r line; do
-            echo "::error::${line}"
-          done
-          echo "=== build-script error context ==="
-          awk '/failed to run custom build command/{found=1} found{print; if(++c>45) exit}' tauri.log | while IFS= read -r line; do
-            echo "::error::${line}"
-          done
+          # emit the build-script failure block as ONE annotation (GitHub caps
+          # the number of annotations per step, so a single %0A-joined message
+          # survives)
+          BLOCK=$(awk '/failed to run custom build command/{found=1} found{print; if(++c>45) exit}' tauri.log)
+          if [ -n "$BLOCK" ]; then
+            ENC=$(printf '%s' "$BLOCK" | sed 's/%/%25/g; s/\r$//' | awk '{printf "%s%%0A", $0}')
+            echo "::error::TAURI_BUILD_SCRIPT_FAILURE%0A${ENC}END"
+          fi
           exit 0
 
       - name: Fail if tauri build failed
         if: steps.tauri.outputs.tauri_exit != '0'
         shell: bash
         run: |
-          set +e
-          echo "=== tauri.log tail (as annotations) ==="
-          tail -80 tauri.log | while IFS= read -r line; do
-            echo "::error::${line}"
-          done
+          echo "tauri build failed — see the TAURI_BUILD_SCRIPT_FAILURE annotation above"
           exit 1
 
       - name: Upload tauri log
