@@ -28,7 +28,13 @@ pub enum SseError {
     #[error("malformed sse line: {0}")]
     Malformed(String),
     #[error("json error: {0}")]
-    Json(#[from] serde_json::Error),
+    Json(String),
+}
+
+impl From<serde_json::Error> for SseError {
+    fn from(e: serde_json::Error) -> Self {
+        SseError::Json(e.to_string())
+    }
 }
 
 /// Splits an SSE byte stream into `data:` payloads, skipping comments and
