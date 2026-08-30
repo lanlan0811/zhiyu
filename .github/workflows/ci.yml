@@ -52,7 +52,28 @@ jobs:
           exit 1
 
       - name: Test workspace
-        run: cargo test --workspace
+        id: test
+        shell: bash
+        run: |
+          set +e
+          cargo test --workspace > test.log 2>&1
+          code=$?
+          echo "test_exit=$code" >> "$GITHUB_OUTPUT"
+          # surface failing test names and assertion messages as annotations
+          grep -E "^---- |^test .* FAILED|panicked at|assertion|FAILED|failures:" test.log | head -60 | while IFS= read -r line; do
+            echo "::error::${line}"
+          done
+          exit 0
+
+      - name: Fail if test failed
+        if: steps.test.outputs.test_exit != '0'
+        shell: bash
+        run: |
+          set +e
+          tail -120 test.log | while IFS= read -r line; do
+            echo "::error::${line}"
+          done
+          exit 1
 
       - name: Clippy
         run: cargo clippy --workspace -- -D warnings
@@ -63,3 +84,10 @@ jobs:
         with:
           name: build-log
           path: build.log
+
+      - name: Upload test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-log
+          path: test.log
