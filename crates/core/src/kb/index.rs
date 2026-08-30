@@ -192,27 +192,25 @@ pub fn list_documents(conn: &mut Connection) -> anyhow::Result<Vec<KbDocument>> 
     Ok(out)
 }
 
-/// Deletes a document and its chunks, removing the FTS rows explicitly (the
-/// FTS5 'delete' command via a trigger trips rusqlite's extra_check).
+/// Deletes a document and its chunks, removing the FTS rows explicitly.
+///
+/// Note: the FTS5 'delete' special command only works on contentless or
+/// external-content tables, not on inline-content tables like `kb_fts`, so we
+/// use a plain `DELETE` against the virtual table instead (rowid-keyed).
 pub fn delete_document(conn: &mut Connection, doc_id: Uuid) -> anyhow::Result<()> {
-    // collect the chunk rowids + contents for FTS cleanup
-    let to_delete: Vec<(i64, String)> = {
-        let mut stmt = conn.prepare("SELECT id, content FROM kb_chunks WHERE doc_id = ?1")?;
+    // collect the chunk rowids for FTS cleanup
+    let to_delete: Vec<i64> = {
+        let mut stmt = conn.prepare("SELECT id FROM kb_chunks WHERE doc_id = ?1")?;
         let mut rows = stmt.query(params![doc_id.to_string()])?;
         let mut out = Vec::new();
         while let Some(row) = rows.next()? {
-            out.push((row.get(0)?, row.get(1)?));
+            out.push(row.get(0)?);
         }
         out
     };
 
-    for (rowid, content) in &to_delete {
-        // FTS5 delete command: INSERT INTO fts(fts, rowid, col) VALUES('delete', rowid, content)
-        let mut stmt = conn.prepare(
-            "INSERT INTO kb_fts(kb_fts, rowid, content) VALUES('delete', ?1, ?2)",
-        )?;
-        let mut rows = stmt.query(params![rowid, content])?;
-        while rows.next()?.is_some() {}
+    for rowid in &to_delete {
+        conn.execute("DELETE FROM kb_fts WHERE rowid = ?1", params![rowid])?;
     }
     conn.execute("DELETE FROM kb_docs WHERE id = ?1", params![doc_id.to_string()])?;
     conn.execute("DELETE FROM kb_chunks WHERE doc_id = ?1", params![doc_id.to_string()])?;

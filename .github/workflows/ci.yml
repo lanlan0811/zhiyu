@@ -56,14 +56,20 @@ jobs:
         shell: bash
         run: |
           set +e
-          cargo test --workspace --message-format=short > test.log 2>&1
+          cargo test --workspace > test.log 2>&1
           code=$?
           echo "test_exit=$code" >> "$GITHUB_OUTPUT"
           echo "cargo test exit code: $code"
           # surface compiler errors and failing tests as annotations
-          grep -E "error\[|error:|^---- |panicked at|test result:" test.log | head -40 | while IFS= read -r line; do
+          grep -E "error\[|error:|^---- |panicked at|test result:|could not compile" test.log | head -40 | while IFS= read -r line; do
             echo "::error::${line}"
           done
+          # if nothing matched, dump the whole log
+          if ! grep -qE "error\[|error:|could not compile" test.log; then
+            cat test.log | head -60 | while IFS= read -r line; do
+              echo "::error::${line}"
+            done
+          fi
           exit 0
 
       - name: Fail if test failed

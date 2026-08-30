@@ -88,10 +88,9 @@ impl KnowledgeBase {
     pub fn reindex(&self, folder: &PathBuf) -> anyhow::Result<usize> {
         let conn = self.conn.lock().unwrap();
         conn.execute_batch("DELETE FROM kb_docs; DELETE FROM kb_chunks; DELETE FROM kb_vectors;")?;
-        // clear the FTS table (delete-all command, drained via query)
-        if let Ok(mut stmt) = conn.prepare("INSERT INTO kb_fts(kb_fts) VALUES('delete-all')") {
-            let _ = stmt.query([]);
-        }
+        // clear the FTS table (plain DELETE — the 'delete-all' special command
+        // only works on contentless/external-content tables, not inline ones)
+        conn.execute("DELETE FROM kb_fts", [])?;
         drop(conn);
         let mut count = 0;
         if folder.is_dir() {
