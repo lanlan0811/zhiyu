@@ -196,8 +196,7 @@ pub fn usage_from_json(value: &serde_json::Value) -> zhiyu_protocol::Usage {
     let cached_read = num(value, &["cached_read_tokens", "cachedReadTokens", "cached_input_tokens", "cachedInputTokens"]);
     let cached_write = num(value, &["cached_write_tokens", "cachedWriteTokens"]);
     let total = num(value, &["total_tokens", "totalTokens"])
-        .max(input + output)
-        .max(0);
+        .max(input + output);
     zhiyu_protocol::Usage {
         input_tokens: input,
         output_tokens: output,
