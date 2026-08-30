@@ -72,7 +72,7 @@ impl BrowserService {
         let result = OpResult { ok, value, elapsed_ms: started.elapsed().as_millis() as u64 };
         self.log.lock().unwrap().push(BrowserLogEntry {
             tab_id: self.tabs.lock().unwrap().active().unwrap_or_default(),
-            method,
+            method: method.to_string(),
             ok,
             value: result.value.clone(),
         });
