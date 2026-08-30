@@ -62,13 +62,29 @@ pub fn open_kb(dir: &Path) -> anyhow::Result<Connection> {
             dim INTEGER NOT NULL,
             values BLOB NOT NULL
         );
-        CREATE VIRTUAL TABLE IF NOT EXISTS kb_fts USING fts5(
-            content, tokenize='unicode61'
-        );
         "#,
     )?;
+    // FTS5 virtual table: CREATE VIRTUAL TABLE returns a result row, which
+    // rusqlite's execute/execute_batch reject when extra_check is on
+    // (bundled-full), so prepare + step it manually.
+    if fts5_available(&conn) {
+        let stmt = conn.prepare(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS kb_fts USING fts5(content, tokenize='unicode61')",
+        )?;
+        let _ = stmt.step();
+    }
     ensure_fts_triggers(&conn)?;
     Ok(conn)
+}
+
+/// Whether the bundled SQLite knows the FTS5 module.
+fn fts5_available(conn: &Connection) -> bool {
+    conn.query_row(
+        "SELECT 1 FROM pragma_module_list() WHERE name = 'fts5'",
+        [],
+        |_| Ok(true),
+    )
+    .unwrap_or(false)
 }
 
 /// The FTS5 triggers keep the virtual table in sync with `kb_chunks`.
