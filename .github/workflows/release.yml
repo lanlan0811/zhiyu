@@ -63,13 +63,49 @@ jobs:
           name: tauri-build-log
           path: ${{ github.workspace }}/tauri-build.log
 
-      - uses: tauri-apps/tauri-action@v0
+      # Bundle NSIS + MSI installers directly with the @tauri-apps/cli (installed
+      # as a web devDependency). tauri-action@v0 is avoided: it fails instantly
+      # on the Node 24 runtime GitHub now forces onto older actions.
+      - name: Bundle tauri app (nsis + msi)
+        id: bundle
+        shell: bash
+        run: |
+          set +e
+          npm --prefix web run tauri -- build > tauri-bundle.log 2>&1
+          code=$?
+          echo "bundle_exit=$code" >> "$GITHUB_OUTPUT"
+          echo "tauri bundle exit code: $code"
+          BLOCK=$(grep -E "error|failed|Error|panicked" tauri-bundle.log | head -40)
+          if [ -n "$BLOCK" ]; then
+            ENC=$(printf '%s' "$BLOCK" | sed 's/%/%25/g; s/\r$//' | awk '{printf "%s%%0A", $0}')
+            echo "::error::TAURI_BUNDLE_FAILURE%0A${ENC}END"
+          fi
+          exit 0
+
+      - name: Fail if bundle failed
+        if: steps.bundle.outputs.bundle_exit != '0'
+        shell: bash
+        run: |
+          echo "tauri bundle failed — see the TAURI_BUNDLE_FAILURE annotation above"
+          tail -80 tauri-bundle.log
+          exit 1
+
+      - name: Upload bundle log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-bundle-log
+          path: ${{ github.workspace }}/tauri-bundle.log
+
+      - name: Publish draft GitHub Release
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CARGO_BUILD_JOBS: "2"
         with:
-          projectPath: src-tauri
-          tagName: ${{ github.ref_name }}
-          releaseName: '知屿 Zhīyǔ ${{ github.ref_name }}'
-          releaseBody: '自动生成的 Windows 发行包'
-          releaseDraft: true
+          tag_name: ${{ github.ref_name }}
+          name: '知屿 Zhīyǔ ${{ github.ref_name }}'
+          body: '自动生成的 Windows 发行包（NSIS + MSI，未签名）'
+          draft: true
+          files: |
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/*.msi
