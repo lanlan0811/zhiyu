@@ -43,8 +43,12 @@ jobs:
           grep -nE "error|panicked|failed|cannot find|unresolved" tauri-build.log | head -40 | while IFS= read -r line; do
             echo "::error::${line}"
           done
+          echo "=== build-script error context ==="
+          grep -n -A 30 "failed to run custom build command" tauri-build.log | head -90 | while IFS= read -r line; do
+            echo "::error::${line}"
+          done
           echo "=== tauri-build.log tail ==="
-          tail -100 tauri-build.log | while IFS= read -r line; do
+          tail -120 tauri-build.log | while IFS= read -r line; do
             echo "::error::${line}"
           done
           exit 0
