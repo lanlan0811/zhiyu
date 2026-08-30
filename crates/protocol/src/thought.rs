@@ -1,6 +1,7 @@
 //! Model thought-level system: six levels plus the per-level patch table.
 
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 /// The six thought levels. `off` disables reasoning entirely; `max` requests
 /// the strongest reasoning the model supports.
@@ -36,18 +37,6 @@ impl ThoughtLevel {
         }
     }
 
-    pub fn from_str(s: &str) -> Option<Self> {
-        match s {
-            "off" => Some(ThoughtLevel::Off),
-            "low" => Some(ThoughtLevel::Low),
-            "medium" => Some(ThoughtLevel::Medium),
-            "high" => Some(ThoughtLevel::High),
-            "xhigh" => Some(ThoughtLevel::Xhigh),
-            "max" => Some(ThoughtLevel::Max),
-            _ => None,
-        }
-    }
-
     /// Next level in the cyclic order (off → low → … → max → off).
     pub fn next(self) -> Self {
         match self {
@@ -57,6 +46,22 @@ impl ThoughtLevel {
             ThoughtLevel::High => ThoughtLevel::Xhigh,
             ThoughtLevel::Xhigh => ThoughtLevel::Max,
             ThoughtLevel::Max => ThoughtLevel::Off,
+        }
+    }
+}
+
+impl FromStr for ThoughtLevel {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "off" => Ok(ThoughtLevel::Off),
+            "low" => Ok(ThoughtLevel::Low),
+            "medium" => Ok(ThoughtLevel::Medium),
+            "high" => Ok(ThoughtLevel::High),
+            "xhigh" => Ok(ThoughtLevel::Xhigh),
+            "max" => Ok(ThoughtLevel::Max),
+            _ => Err(()),
         }
     }
 }
