@@ -17,8 +17,6 @@ jobs:
         with:
           node-version: 22
 
-      # Build the web frontend first so Tauri's frontendDist exists
-      # before any cargo step that embeds it.
       - name: Install frontend dependencies
         working-directory: web
         run: npm ci
@@ -27,28 +25,27 @@ jobs:
         working-directory: web
         run: npm run build
 
-      - name: Build workspace
+      - name: Build workspace (log errors to annotations)
         id: build
         shell: bash
         run: |
-          cargo build --workspace > /tmp/build.log 2>&1
-          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          set -o pipefail
+          cargo build --workspace --message-format=short 2>&1 | tee /tmp/build.log | grep -E "error|warning: unused|warning: " || true
+          code=${PIPESTATUS[0]}
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          # surface each error line as a github annotation so it appears in check-run annotations
+          grep -E "^error" /tmp/build.log | head -40 | while IFS= read -r line; do
+            echo "::error file=ci.yml::$line"
+          done
           exit 0
 
-      - name: Show build result
-        if: always()
+      - name: Fail if build failed
+        if: steps.build.outputs.exit_code != '0'
         shell: bash
         run: |
-          code="${{ steps.build.outputs.exit_code }}"
-          echo "cargo build exit code: $code"
-          if [ "$code" != "0" ]; then
-            tail -80 /tmp/build.log
-          fi
-
-      - name: Fail if build failed
-        if: always() && steps.build.outputs.exit_code != '0'
-        shell: bash
-        run: exit 1
+          echo "=== last 100 lines of build log ==="
+          tail -100 /tmp/build.log
+          exit 1
 
       - name: Test workspace
         run: cargo test --workspace
@@ -61,4 +58,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-log
-          path: /tmp/build.log
+          path: D:\a\zhiyu\zhiyu\build.log
