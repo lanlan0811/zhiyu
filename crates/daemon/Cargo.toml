@@ -9,12 +9,18 @@ description = "Local WebSocket/JSON-RPC daemon for 知屿 Zhīyǔ with token aut
 
 [dependencies]
 zhiyu-protocol = { path = "../protocol" }
-zhiyu-core = { path = "../core" }
-tokio.workspace = true
-tokio-tungstenite.workspace = true
-tungstenite.workspace = true
+anyhow.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+futures-util.workspace = true
+rand.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
+tokio.workspace = true
+tokio-tungstenite.workspace = true
 tracing.workspace = true
-rand.workspace = true
+tracing-subscriber.workspace = true
+tungstenite.workspace = true
+uuid.workspace = true
+dirs.workspace = true

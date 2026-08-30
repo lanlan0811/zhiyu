@@ -1,18 +1,53 @@
-//! `zhiyu-protocol` — the wire contracts shared by every layer of 知屿 Zhīyǔ.
-//!
-//! This crate contains only data types (no I/O, no business logic): modes,
-//! messages, session cursors, checkpoints, thought levels, context usage,
-//! model configuration and the JSON-RPC request/response/event envelopes.
+//! 知屿 Zhīyǔ protocol crate — wire contracts shared by every layer.
 
-/// Placeholder for the M1 skeleton. Replaced with the full contract types in M2.
-pub fn version() -> &'static str {
-    env!("CARGO_PKG_VERSION")
+pub mod context;
+pub mod message;
+pub mod mode;
+pub mod model;
+pub mod rpc;
+pub mod settings;
+pub mod thought;
+
+pub use context::{ContextUsage, Usage, UsageSource};
+pub use message::{Checkpoint, Message, Role, SessionCursor};
+pub use mode::Mode;
+pub use model::{ApiFormat, ModelConfig, ProviderKey, ProviderKeys};
+pub use rpc::{
+    Command, ErrorInfo, Event, Hello, HelloReply, Inbound, Outbound, PROTOCOL_VERSION, Request,
+    Response, WritingKind, WritingTask,
+};
+pub use settings::Settings;
+pub use thought::{PathValue, ReasoningConfig, RequestPatch, ThoughtLevel, ThoughtLevelSpec};
+
+/// The wire protocol version this crate implements.
+pub fn protocol_version() -> u32 {
+    PROTOCOL_VERSION
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
-    fn protocol_version_is_semver() {
-        assert!(super::version().starts_with("0.1."));
+    fn full_contract_compiles_and_round_trips() {
+        // A representative end-to-end envelope: create session → reply → event.
+        let req = Request {
+            id: 7,
+            command: Command::SessionCreate { mode: Mode::Coding, title: None, workspace_dir: Some(r"D:\proj".into()) },
+        };
+        let wire = serde_json::to_string(&req).unwrap();
+        let back: Request = serde_json::from_str(&wire).unwrap();
+        match back.command {
+            Command::SessionCreate { mode, workspace_dir, .. } => {
+                assert_eq!(mode, Mode::Coding);
+                assert_eq!(workspace_dir.as_deref(), Some(r"D:\proj"));
+            }
+            _ => panic!("wrong command"),
+        }
+
+        let ev = Event::Status { seq: 1, session_id: None, text: "hi".into() };
+        let wire = serde_json::to_string(&ev).unwrap();
+        let back: Event = serde_json::from_str(&wire).unwrap();
+        assert_eq!(back.seq(), 1);
     }
 }

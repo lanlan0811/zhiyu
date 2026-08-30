@@ -47,6 +47,7 @@ hex = "0.4"
 rand = "0.8"
 dirs = "5"
 percent-encoding = "2"
+async-trait = "0.1"
 
 [profile.dev]
 debug = "line-tables-only"
