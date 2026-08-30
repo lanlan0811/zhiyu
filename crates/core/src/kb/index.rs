@@ -232,9 +232,7 @@ pub fn hybrid_search(
     let fts_query = fts_query(query);
     let mut fts_hits: Vec<(u64, String)> = Vec::new();
     if !fts_query.is_empty() {
-        let sql = format!(
-            "SELECT c.id, c.content FROM kb_fts f JOIN kb_chunks c ON c.id = f.rowid WHERE kb_fts MATCH ?1 ORDER BY rank LIMIT ?2"
-        );
+        let sql = "SELECT c.id, c.content FROM kb_fts f JOIN kb_chunks c ON c.id = f.rowid WHERE kb_fts MATCH ?1 ORDER BY rank LIMIT ?2";
         if let Ok(mut stmt) = conn.prepare(&sql) {
             let mut rows = stmt.query(params![fts_query, RRF_TOP as i64])?;
             while let Some(row) = rows.next()? {
@@ -369,11 +367,9 @@ pub fn read_document(conn: &mut Connection, doc_id: Uuid) -> anyhow::Result<Opti
     )?;
     let rows = stmt.query_map(params![doc_id.to_string()], |r| r.get::<_, String>(0))?;
     let mut text = String::new();
-    for row in rows {
-        if let Ok(chunk) = row {
-            text.push_str(&chunk);
-            text.push('\n');
-        }
+    for chunk in rows.flatten() {
+        text.push_str(&chunk);
+        text.push('\n');
     }
     Ok(Some((doc, text)))
 }

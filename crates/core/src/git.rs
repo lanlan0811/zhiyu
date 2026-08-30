@@ -27,7 +27,7 @@ fn run(dir: &Path, args: &[&str]) -> Result<String, GitError> {
         .current_dir(dir)
         .args(args)
         .output()
-        .map_err(|e| GitError::Io(e))?;
+        .map_err(GitError::Io)?;
     if !out.status.success() {
         return Err(GitError::Command {
             cmd: format!("git {}", args.join(" ")),

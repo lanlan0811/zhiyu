@@ -88,19 +88,15 @@ jobs:
         shell: bash
         run: |
           set +e
-          cargo clippy --workspace -- -D warnings > clippy.log 2>&1
+          cargo clippy --workspace --message-format=short -- -D warnings > clippy.log 2>&1
           code=$?
           echo "clippy_exit=$code" >> "$GITHUB_OUTPUT"
           echo "cargo clippy exit code: $code"
-          grep -E "^(error|warning)\[|^error:|^warning:|--> " clippy.log | head -80 | while IFS= read -r line; do
+          # short format: one error per line — surface every line containing a
+          # crate path or a warning/error marker
+          grep -E "crates\\\\|warning:|error" clippy.log | head -60 | while IFS= read -r line; do
             echo "::error::${line}"
           done
-          # if nothing matched, dump the tail
-          if ! grep -qE "^error\[|^error:|^warning:" clippy.log; then
-            tail -60 clippy.log | while IFS= read -r line; do
-              echo "::error::${line}"
-            done
-          fi
           exit 0
 
       - name: Fail if clippy failed

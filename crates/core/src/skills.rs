@@ -50,7 +50,7 @@ fn scan_root(root: &Path, out: &mut BTreeMap<String, Skill>) {
                 .file_name()
                 .map(|n| n.to_string_lossy().to_string())
                 .unwrap_or_else(|| "unknown".into());
-            let (name, description) = parse_frontmatter(&entry.path());
+            let (name, description) = parse_frontmatter(entry.path());
             out.insert(
                 id.clone(),
                 Skill {

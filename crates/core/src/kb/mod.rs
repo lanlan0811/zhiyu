@@ -6,7 +6,7 @@ pub mod embedding;
 pub mod index;
 pub mod ingest;
 
-use std::path::PathBuf;
+use std::path::Path;
 use std::sync::Mutex;
 
 use rusqlite::Connection;
@@ -25,13 +25,13 @@ pub struct KnowledgeBase {
 
 impl KnowledgeBase {
     /// Opens the KB under `dir` with the default embedder.
-    pub fn open(dir: &PathBuf) -> anyhow::Result<Self> {
+    pub fn open(dir: &Path) -> anyhow::Result<Self> {
         let conn = open_kb(dir)?;
         Ok(KnowledgeBase { conn: Mutex::new(conn), embedder: crate::kb::embedding::default_embedder() })
     }
 
     /// Opens with an explicit embedder (tests).
-    pub fn open_with(dir: &PathBuf, embedder: Box<dyn Embedder>) -> anyhow::Result<Self> {
+    pub fn open_with(dir: &Path, embedder: Box<dyn Embedder>) -> anyhow::Result<Self> {
         let conn = open_kb(dir)?;
         Ok(KnowledgeBase { conn: Mutex::new(conn), embedder })
     }
@@ -40,7 +40,7 @@ impl KnowledgeBase {
         hybrid_search(&mut self.conn.lock().unwrap(), self.embedder.as_ref(), query, limit)
     }
 
-    pub fn import_file(&self, path: &PathBuf) -> anyhow::Result<KbDocument> {
+    pub fn import_file(&self, path: &Path) -> anyhow::Result<KbDocument> {
         let title = path
             .file_stem()
             .map(|s| s.to_string_lossy().to_string())
@@ -85,7 +85,7 @@ impl KnowledgeBase {
 
     /// Rebuilds the index from the documents folder: wipes all documents then
     /// re-ingests every supported file under `folder` (recursively).
-    pub fn reindex(&self, folder: &PathBuf) -> anyhow::Result<usize> {
+    pub fn reindex(&self, folder: &Path) -> anyhow::Result<usize> {
         let conn = self.conn.lock().unwrap();
         conn.execute_batch("DELETE FROM kb_docs; DELETE FROM kb_chunks; DELETE FROM kb_vectors;")?;
         // clear the FTS table (plain DELETE — the 'delete-all' special command
