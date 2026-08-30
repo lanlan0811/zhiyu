@@ -29,6 +29,7 @@ jobs:
         id: build
         shell: bash
         run: |
+          set +e
           cargo build --workspace --message-format=short > build.log 2>&1
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
@@ -43,6 +44,7 @@ jobs:
         if: steps.build.outputs.exit_code != '0'
         shell: bash
         run: |
+          set +e
           echo "=== build.log tail (as annotations) ==="
           tail -100 build.log | while IFS= read -r line; do
             echo "::error::${line}"
