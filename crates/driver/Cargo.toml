@@ -1,0 +1,19 @@
+[package]
+name = "zhiyu-driver"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "OpenAI dual-protocol driver (chat/completions + responses) with SSE streaming for 知屿 Zhīyǔ."
+
+[dependencies]
+zhiyu-protocol = { path = "../protocol" }
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+futures-util.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+anyhow.workspace = true

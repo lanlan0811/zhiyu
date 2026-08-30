@@ -1,0 +1,14 @@
+[package]
+name = "zhiyu-context"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Context management for 知屿 Zhīyǔ: window resolution, usage tracking, compaction and model-switch guard."
+
+[dependencies]
+zhiyu-protocol = { path = "../protocol" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true

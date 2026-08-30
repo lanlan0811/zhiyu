@@ -1,24 +1,23 @@
-target
-.waku-cache
+# Rust
+/target
 
-# The pre-fork TypeScript client, kept in the working tree for reference only.
-# It carries its own .git and its own node_modules; tracking it here would add
-# six figures of files to a repo that has nothing to do with it.
-old-code/
-cc-switch-main/
+# Frontend
+node_modules/
+web/dist/
 
-.DS_Store
+# Local data / logs
 *.log
-.env
-
-/dist
-node_modules
 temp/
 
-.DS_Store
-
+# Local editor / harness state
 .zcode/
-
 .codex/
-
 AGENTS.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files (keys must never be committed)
+.env
+.env.*

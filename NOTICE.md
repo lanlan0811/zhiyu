@@ -1,56 +1,27 @@
-# Modification Notice
+# NOTICE
 
-This repository is a modified fork of [Waku](https://github.com/egoist/waku) by
-egoist, licensed under the GNU General Public License v3.0 only (see
-[LICENSE](LICENSE)).
+知屿 Zhīyǔ (MIT License) is a clean-room rewrite of the [Waku](https://github.com/egoist/waku) /
+CheapRouter desktop client (GPL-3.0-only), rebuilt for pure-local, API-driven operation.
 
-Per GPL-3.0 section 5(a), the modifications below are recorded with their dates.
-This fork remains licensed under GPL-3.0-only.
+This project is released under the **MIT License**. Per the requirement of the
+upstream GPL-3.0 license, the attribution and modification history of the
+original code are recorded here for transparency:
 
-## Modifications
+- Upstream project: Waku by egoist (GPL-3.0-only), forked and modified as
+  CheapRouter with cloud account integration.
+- The upstream source (GPL-3.0) was **reverse-analyzed for feature reference
+  only** and is preserved in the `reversed-src/` and `reports/` directories.
+- **No GPL source code is copied into this project.** All implementation in
+  `crates/`, `src-tauri/` and `web/` is newly written under the MIT License.
+- The GPUI framework used by the upstream (GPL-3.0-or-later) is replaced with
+  Tauri v2 (MIT/Apache-2.0) + React (MIT).
 
-| Date | Change |
-|---|---|
-| 2026-08-24 | Forked from upstream `egoist/waku` at commit `d82304a`. |
-| 2026-08-24 | Added `NOTICE.md` (this file) and `docs/FORK.md` (fork maintenance workflow). |
-| 2026-08-24 | Added `src/brand.rs`: single-source product branding (name, bundle id, update feed, telemetry opt-out). |
-| 2026-08-24 | Added the `sub2api` crate (`crates/sub2api`): managed cloud account integration (browser sign-in over a loopback redirect, credential storage, token refresh), gateway routing configuration, and agent CLI detection with install-command generation. |
-| 2026-08-24 | Added `src/app/cloud_account.rs`: Settings → Cloud Account page. |
-| 2026-08-24 | Added `src/app/cli_setup.rs`: missing-agent setup section on Settings → Providers. |
-| 2026-08-24 | `crates/waku-core`: added `command_env::command_for_provider()` and used it at the Claude and Codex spawn sites, so agents inherit gateway routing as process environment. |
-| 2026-08-24 | `src/analytics.rs`: telemetry disabled unless the build opts in, so this fork does not report to upstream's endpoint. |
-| 2026-08-24 | `src/updater.rs`, `resources/Info.plist`, `build.rs`, `scripts/release.ts`: retargeted updates and bundle identity at our own release channel. |
-| 2026-08-24 | Replaced the application icons (`resources/AppIcon.icns`, `resources/AppIconDev.icns`, `resources/windows/AppIcon.ico`, `resources/linux/icons/`) and the Linux desktop entry name with our own brand artwork. |
-| 2026-08-24 | Added hosted top-up entry and agent CLI installation to the settings pages. |
-| 2026-08-24 | Added model group selection, gateway model pricing, code redemption, and referral details to Settings → Cloud Account, and a balance chip to the composer status strip. |
-| 2026-08-24 | Added `crates/sub2api/src/node_install.rs`: unattended Node 22 installation (portable zip / MSI / winget on Windows, mirror tarball on macOS) with staged progress, and injected the managed runtime into the `PATH` of spawned agent processes. |
-| 2026-08-25 | Added `crates/sub2api/src/git_install.rs`: unattended Git for Windows installation (PortableGit / silent per-user installer / winget / GitHub direct), `CLAUDE_CODE_GIT_BASH_PATH` export for spawned Claude sessions, and Git on the spawned-process `PATH` so task checkpoints work. |
-| 2026-08-25 | Added `crates/sub2api/src/codex_compat.rs` and used it at the Codex spawn sites: `app-server` arguments resolved from the binary's own `--help`, restoring compatibility with Codex versions that reject `--stdio`. |
-| 2026-08-25 | Replaced every user-visible "Waku" in the UI strings (locales and hardcoded messages) with neutral wording or this fork's brand; `APP_NAME` now carries the brand. Upstream attribution remains in the README, NOTICE, and source comments. |
-| 2026-08-25 | `crates/waku-protocol/src/i18n.rs`: fixed "follow the system language" on Windows by querying `GetUserDefaultLocaleName` — upstream read Unix env vars (`LANG` etc.), which Windows does not set, so the app always started in English there. |
-| 2026-08-25 | Added a cloud sign-in card to the welcome screen and an account chip to the sidebar footer. |
-| 2026-08-27 | Removed the Git for Windows auto-install and detection again; the Codex config template now matches the Electron client's byte for byte; the runtime check reports Node and npm versions permanently. |
-| 2026-08-27 | Added `src/app/cloud_usage.rs`: native usage history page (period stats and the request log). |
-| 2026-08-27 | Added `src/app/model_plaza.rs` and the `/group-status` client: native Model Plaza page — platform tabs, group ranking with health, search, and per-model official-vs-effective pricing cards. |
-| 2026-08-27 | Added `crates/sub2api/src/pay.rs` and `src/app/cloud_pay.rs`: native top-up modal (payment config, order creation, natively rendered QR code via the `qrcode` crate, status polling, cancellation); the balance badge and account menu open it. |
-| 2026-08-27 | Added `crates/sub2api/src/custom_api.rs` and a custom-endpoints section on Settings → Providers: per-CLI base URL + API key routing for Claude Code, Codex (generated `CODEX_HOME`), and Grok (generated `GROK_HOME`), injected at spawn; the CLI install list narrowed to those three. |
-| 2026-08-27 | Claude routing hardened: a generated settings override is passed as `--settings` at spawn, because an `env` block in the user's own `~/.claude/settings.json` overrides plain process environment (verified against the live CLI). |
-| 2026-08-27 | Routing rebuilt on the cc-switch model (`crates/sub2api/src/global_config/`): the desktop now writes each CLI's own global configuration directly — Claude's settings `env` block, Codex's `auth.json` + `config.toml` (surgical TOML edits via `toml_edit`, Codex ≥0.149 `experimental_bearer_token`), Grok's `config.toml`, and one additive provider entry in OpenCode's `opencode.json` and Pi's `models.json` — with pre-takeover originals backed up in `~/.waku/takeover.json` and restored on sign-out. The spawn-time environment injection, generated config homes, and daemon-settings transport were removed; custom endpoints extended to five CLIs with a card-based management UI (status badges, masked keys, connectivity test, open-config-file). |
-| 2026-08-28 | Certificate-free macOS distribution: the release workflow builds ad-hoc, unnotarized artifacts when no Apple certificate secret is configured, and `scripts/install-mac.sh` (served from the release bucket) installs the latest zip via curl — no quarantine attribute, so Gatekeeper shows no prompts; Sparkle handles updates thereafter. |
-| 2026-08-28 | macOS release bundle rebranded: `scripts/bundle.sh` now names the release app and Computer Use helper after the brand (`CheapRouter.app`, overridable via `SUB2API_BRAND_NAME`), matching what `scripts/release.ts` already expected — the release job previously failed with ENOENT on `CheapRouter.app`. The bundle identifier stays upstream's `sh.waku`, and the debug bundle keeps upstream's `Waku Debug` name for the dev tooling. |
-| 2026-08-28 | macOS appcast signing fixed for the fork's key format: `SPARKLE_PRIVATE_KEY` holds libsodium's 64-byte secret (seed then public — what the Windows feed signer consumes), but Sparkle's `generate_appcast` only decodes 32-byte seeds or the legacy 96-byte form, so `scripts/appcast.ts` now hands it just the seed half. |
-| 2026-08-27 | Sparkle update key replaced: `SUPublicEDKey` in `resources/Info.plist` is now the fork's own Ed25519 public key (upstream's removed); the private half is held outside the repository. Verified against the Windows feed signer's own derivation. |
-| 2026-08-27 | Windows packaging rebranded for release: `resources/windows/waku.iss` got the fork's own installer AppId GUID and CheapRouter identity (the executable keeps its internal `waku.exe` name), `bundle-windows.ts`/`appcast-windows.ts`/`release.yml` produce `CheapRouter-*`/`cheaprouter-*` artifacts, the default R2 bucket is `cheaprouter-releases`, and `docs/RELEASING.zh.md` documents the fork's release runbook. |
-| 2026-08-27 | Group health integrated into the switcher UIs: `/group-status` is fetched on the account-refresh cadence (3-minute TTL) and each group in the footer switcher menu and the account page now carries its rate multiplier, 24h availability, and a degraded/down word beside the name. |
-| 2026-08-27 | First-run guidance hardened for machines with nothing installed: the welcome screen points at the one-click CLI installer when no agent CLI is detected, a successful install refreshes provider detection immediately, the app-managed Node directory joined the executable search paths (a CLI installed through the assisted setup no longer needs an app restart to be detected), the missing-agent list gained its heading and per-row status, the Linux Node row now states the package-manager instruction, and the not-installed errors and Providers description point at Settings → Providers. |
-| 2026-08-27 | Added `src/app/announcements.rs` and the `/announcements` client: service announcements from the managed gateway — a bell with an unread dot in the window header, and a native modal with the list, markdown detail view (transcript's own renderer), per-item and mark-all read reporting. |
-| 2026-08-27 | Service, website, and release domains moved from `cheaprouter.org` to `cheaprouter.cc` (`brand.rs`, `build.rs`, `resources/Info.plist`). |
-| 2026-08-27 | Storage rebranded: the home data directory is `~/.cheaprouter` (was upstream's `~/.waku`), platform data/cache folders are `CheapRouter`/`CheapRouter Debug` (were `Waku`/`Waku Debug`), and user command layers moved to `.cheaprouter/commands` + `~/.config/cheaprouter/commands` (legacy locations still scanned). Added `crates/sub2api/src/migrate.rs`, called from the desktop and daemon entry points, which renames legacy directories in place at startup. |
+## Reverse-engineering reports
 
-## Upstream attribution
+- [`reports/逆向分析报告-Waku-CheapRouter.md`](reports/逆向分析报告-Waku-CheapRouter.md)
 
-Waku is developed by egoist and contributors. Upstream source, issue tracker,
-and releases: <https://github.com/egoist/waku>.
+## Third-party notices
 
-The GPUI framework is developed by Zed Industries:
-<https://github.com/zed-industries/zed>.
+This project depends on crates and packages that carry their own licenses
+(MIT / Apache-2.0 / BSD-3-Clause, etc.); see `Cargo.lock` and `web/package.json`
+for the full list.

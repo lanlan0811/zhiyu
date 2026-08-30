@@ -1,0 +1,20 @@
+[package]
+name = "zhiyu-daemon"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Local WebSocket/JSON-RPC daemon for 知屿 Zhīyǔ with token auth and event replay."
+
+[dependencies]
+zhiyu-protocol = { path = "../protocol" }
+zhiyu-core = { path = "../core" }
+tokio.workspace = true
+tokio-tungstenite.workspace = true
+tungstenite.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+rand.workspace = true

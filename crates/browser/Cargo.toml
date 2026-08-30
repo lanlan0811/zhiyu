@@ -1,0 +1,16 @@
+[package]
+name = "zhiyu-browser"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Embedded browser control for 知屿 Zhīyǔ: WebView2 tab lifecycle, CDP/locator engine and the browser_execute tool."
+
+[dependencies]
+zhiyu-protocol = { path = "../protocol" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true

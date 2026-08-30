@@ -1,0 +1,14 @@
+[package]
+name = "zhiyu-protocol"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Type contracts for 知屿 Zhīyǔ: messages, events, commands, modes, thought levels, context and model configuration."
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+uuid.workspace = true
