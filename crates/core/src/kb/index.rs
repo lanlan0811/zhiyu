@@ -228,6 +228,28 @@ pub fn hybrid_search(
             }
         }
     }
+    // LIKE fallback for CJK: the unicode61 tokenizer does not split Chinese,
+    // so MATCH misses CJK queries. A substring scan catches them.
+    if fts_hits.is_empty() {
+        let mut like_hits: Vec<(u64, String)> = Vec::new();
+        for term in query.split_whitespace().filter(|t| !t.is_empty()) {
+            let like = format!("%{term}%");
+            if let Ok(mut stmt) = conn.prepare(
+                "SELECT id, content FROM kb_chunks WHERE content LIKE ?1 LIMIT ?2",
+            ) {
+                if let Ok(mut rows) = stmt.query(params![like, RRF_TOP as i64]) {
+                    while let Ok(Some(row)) = rows.next() {
+                        let id: i64 = match row.get(0) { Ok(v) => v, Err(_) => continue };
+                        let content: String = match row.get(1) { Ok(v) => v, Err(_) => continue };
+                        if !like_hits.iter().any(|(i, _)| *i == id as u64) {
+                            like_hits.push((id as u64, content));
+                        }
+                    }
+                }
+            }
+        }
+        fts_hits = like_hits;
+    }
 
     // ---- vector candidates (cosine)
     let q_vec = embedder.embed(query);

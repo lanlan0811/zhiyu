@@ -210,15 +210,12 @@ impl Store {
 
     /// The next cursor to assign — max(cursor)+1, 0 when empty.
     pub fn next_cursor(&mut self, session_id: Uuid) -> anyhow::Result<u64> {
-        let max: Option<i64> = self
-            .conn
-            .query_row(
-                "SELECT MAX(cursor) FROM messages WHERE session_id = ?1",
-                [session_id.to_string()],
-                |r| r.get(0),
-            )
-            .optional()?;
-        Ok(max.map_or(0, |m| m as u64 + 1))
+        let max: i64 = self.conn.query_row(
+            "SELECT COALESCE(MAX(cursor), -1) FROM messages WHERE session_id = ?1",
+            [session_id.to_string()],
+            |r| r.get(0),
+        )?;
+        Ok((max + 1) as u64)
     }
 
     /// Messages from a cursor onward (resume/replay).
