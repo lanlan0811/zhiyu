@@ -95,7 +95,7 @@ async fn handle_connection(
     let (out_tx, mut out_rx) = tokio::sync::mpsc::unbounded_channel::<Outbound>();
     let mut live_rx = bus.subscribe();
 
-    let sink_task = tokio::spawn(async move {
+    let sink_task: tokio::task::JoinHandle<anyhow::Result<()>> = tokio::spawn(async move {
         while let Some(o) = out_rx.recv().await {
             if sink.send(frame(&o)).await.is_err() {
                 break;
@@ -158,7 +158,11 @@ async fn handle_connection(
     Ok(())
 }
 
-async fn reject(sink: &mut (impl SinkExt<WsMessage> + Unpin), code: i32, message: &str) -> anyhow::Result<()> {
+async fn reject(
+    sink: &mut futures_util::stream::SplitSink<tokio_tungstenite::WebSocketStream<TcpStream>, WsMessage>,
+    code: i32,
+    message: &str,
+) -> anyhow::Result<()> {
     sink.send(frame(&Outbound::Response(Response {
         id: 0,
         result: None,
