@@ -233,7 +233,7 @@ pub fn hybrid_search(
     let mut fts_hits: Vec<(u64, String)> = Vec::new();
     if !fts_query.is_empty() {
         let sql = "SELECT c.id, c.content FROM kb_fts f JOIN kb_chunks c ON c.id = f.rowid WHERE kb_fts MATCH ?1 ORDER BY rank LIMIT ?2";
-        if let Ok(mut stmt) = conn.prepare(&sql) {
+        if let Ok(mut stmt) = conn.prepare(sql) {
             let mut rows = stmt.query(params![fts_query, RRF_TOP as i64])?;
             while let Some(row) = rows.next()? {
                 let id: i64 = row.get(0)?;
@@ -276,9 +276,11 @@ pub fn hybrid_search(
             let dim: i64 = row.get(1)?;
             let blob: Vec<u8> = row.get(2)?;
             let values: Vec<f32> = blob
-                .chunks_exact(4)
+                .as_chunks::<4>()
+                .0
+                .iter()
                 .take(dim as usize)
-                .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
+                .map(|c| f32::from_le_bytes(*c))
                 .collect();
             let sim = cosine_similarity(&q_vec, &super::embedding::Embedding { dim: dim as usize, values });
             if sim > 0.01 {

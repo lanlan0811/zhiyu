@@ -81,8 +81,7 @@ pub fn resolve(root: &Path, rel: Option<&str>) -> Result<PathBuf, WorkspaceError
         Some(rel) => {
             let joined = root_canon.join(rel);
             // normalize .. components
-            let normalized = normalize(&joined);
-            normalized
+            normalize(&joined)
         }
     };
     if !candidate.starts_with(&root_canon) {
