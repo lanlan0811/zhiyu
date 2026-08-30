@@ -204,22 +204,22 @@ pub fn hybrid_search(
     // ---- vector candidates (cosine)
     let q_vec = embedder.embed(query);
     let mut vec_hits: Vec<(u64, f32)> = Vec::new();
-    let mut stmt = conn.prepare(
-        "SELECT chunk_id, dim, values FROM kb_vectors",
-    )?;
-    let mut rows = stmt.query([])?;
-    while let Some(row) = rows.next()? {
-        let chunk_id: i64 = row.get(0)?;
-        let dim: i64 = row.get(1)?;
-        let blob: Vec<u8> = row.get(2)?;
-        let values: Vec<f32> = blob
-            .chunks_exact(4)
-            .take(dim as usize)
-            .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
-            .collect();
-        let sim = cosine_similarity(&q_vec, &super::embedding::Embedding { dim: dim as usize, values });
-        if sim > 0.01 {
-            vec_hits.push((chunk_id as u64, sim));
+    {
+        let mut stmt = conn.prepare("SELECT chunk_id, dim, values FROM kb_vectors")?;
+        let mut rows = stmt.query([])?;
+        while let Some(row) = rows.next()? {
+            let chunk_id: i64 = row.get(0)?;
+            let dim: i64 = row.get(1)?;
+            let blob: Vec<u8> = row.get(2)?;
+            let values: Vec<f32> = blob
+                .chunks_exact(4)
+                .take(dim as usize)
+                .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
+                .collect();
+            let sim = cosine_similarity(&q_vec, &super::embedding::Embedding { dim: dim as usize, values });
+            if sim > 0.01 {
+                vec_hits.push((chunk_id as u64, sim));
+            }
         }
     }
     vec_hits.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
